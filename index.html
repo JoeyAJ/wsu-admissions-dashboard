@@ -291,7 +291,7 @@
       <div class="hero-top">
         <div>
           <h1>📊 又松大學招生數據 Dashboard</h1>
-          <p>部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。仍保留手動上傳功能，方便本機測試。</p>
+          <p>部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。</p>
         </div>
         <div class="hero-actions">
           <div class="lang-switch" aria-label="Language switch">
@@ -303,20 +303,10 @@
       </div>
     </section>
 
-    <section class="upload-card">
-      <div class="upload">
-        <strong>Excel 資料來源</strong>
-        <p class="small-note">部署版會優先自動讀取同資料夾的 data.xlsx；也支援手動上傳 .xlsx / .xls。</p>
-        <input type="file" id="fileInput" accept=".xlsx,.xls" />
-        <div class="upload-actions">
-          <button class="btn" type="button" onclick="document.getElementById('fileInput').click();">📤 選擇 Excel 文件</button>
-          <button class="btn secondary" type="button" onclick="resetDashboard();">重新載入</button>
-        </div>
-        <div class="drop-zone" id="dropZone">也可以把 Excel 直接拖曳到這裡</div>
-      </div>
-      <div class="status-card">
+    <section class="status-strip">
+      <div class="status-card full">
         <div class="status-title">資料讀取狀態</div>
-        <div class="file-info" id="fileInfo">正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。</div>
+        <div class="file-info" id="fileInfo">正在自動讀取 data.xlsx。</div>
         <div class="small-note" id="sheetInfo"></div>
       </div>
     </section>
@@ -788,22 +778,8 @@ const HEADER_ALIASES = {
 
 const COLORS = ['#378ADD', '#639922', '#BA7517', '#E24B4A', '#185FA5', '#7C3AED', '#0F766E', '#C2410C', '#64748B'];
 
-const fileInput = document.getElementById('fileInput');
-const dropZone = document.getElementById('dropZone');
-fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
-
-dropZone.addEventListener('dragover', (event) => {
-  event.preventDefault();
-  dropZone.classList.add('dragover');
-});
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', (event) => {
-  event.preventDefault();
-  dropZone.classList.remove('dragover');
-  handleFile(event.dataTransfer.files[0]);
-});
-
 applyLanguage();
+loadHostedExcel();
 
 
 async function loadHostedExcel() {
@@ -820,7 +796,7 @@ async function loadHostedExcel() {
   try {
     const response = await fetch(`${AUTO_DATA_FILE}?v=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) {
-      throw new Error(`找不到 ${AUTO_DATA_FILE}，可先手動上傳 Excel，或把最新 Excel 重新命名為 data.xlsx 後放到同一部署資料夾。`);
+      throw new Error(`找不到 ${AUTO_DATA_FILE}。請把最新 Excel 重新命名為 data.xlsx，並放到與 index.html 相同的部署資料夾。`);
     }
     const buffer = await response.arrayBuffer();
     const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true, cellText: false });
@@ -1444,12 +1420,12 @@ function switchTab(i) {
 }
 
 function resetDashboard() {
-  fileInput.value = '';
   Object.keys(chartsObj).forEach(destroyChart);
   dashData = null;
   document.getElementById('content').style.display = 'none';
   document.getElementById('sheetInfo').innerHTML = '';
-  setStatus('正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。', '');
+  setStatus('正在自動讀取 data.xlsx。', '');
+  loadHostedExcel();
 }
 
 function setStatus(message, type) {
