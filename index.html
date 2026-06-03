@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>又松大学招生 Dashboard｜自动部署版</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #f3f7fb;
+      --card: rgba(255,255,255,.88);
+      --card-strong: #ffffff;
+      --text: #172033;
+      --muted: #687589;
+      --line: #dbe5f1;
+      --blue: #378ADD;
+      --blue-dark: #185FA5;
+      --green: #639922;
+      --orange: #BA7517;
+      --red: #E24B4A;
+      --shadow: 0 14px 40px rgba(24, 95, 165, .10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Noto Sans SC", "Microsoft JhengHei", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(55,138,221,.18), transparent 32%),
+        radial-gradient(circle at 86% 14%, rgba(99,153,34,.14), transparent 28%),
+        linear-gradient(145deg, #eef6ff 0%, #f8fbff 48%, #eef3f9 100%);
+    }
+
+    .container { max-width: 1480px; margin: 0 auto; padding: 28px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid rgba(255,255,255,.65);
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(255,255,255,.68));
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: -80px -120px auto auto;
+      width: 360px;
+      height: 360px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(55,138,221,.18), transparent 66%);
+      pointer-events: none;
+    }
+    .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: relative; z-index: 1; }
+    .hero h1 { font-size: clamp(26px, 3vw, 40px); line-height: 1.1; letter-spacing: -.02em; margin-bottom: 10px; }
+    .hero p { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 800px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(55,138,221,.22);
+      border-radius: 999px;
+      background: rgba(55,138,221,.08);
+      color: var(--blue-dark);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+    .lang-switch {
+      display: inline-flex;
+      gap: 6px;
+      padding: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.76);
+      border: 1px solid rgba(55,138,221,.22);
+      box-shadow: 0 8px 18px rgba(24,95,165,.08);
+      backdrop-filter: blur(12px);
+      white-space: nowrap;
+    }
+    .lang-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+    .lang-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      box-shadow: 0 8px 16px rgba(55,138,221,.20);
+    }
+
+    .upload-card {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .upload, .status-card, .panel, .tab-content, .chart-box, .metric {
+      border: 1px solid rgba(255,255,255,.68);
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+    .upload { padding: 20px; }
+    .upload input { display: none; }
+    .upload-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 10px 22px rgba(55,138,221,.24);
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,.9);
+      color: var(--blue-dark);
+      border: 1px solid rgba(55,138,221,.25);
+      box-shadow: none;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .drop-zone {
+      margin-top: 14px;
+      border: 1.5px dashed rgba(55,138,221,.35);
+      border-radius: 16px;
+      padding: 18px;
+      color: var(--muted);
+      background: rgba(255,255,255,.45);
+      transition: .2s ease;
+    }
+    .drop-zone.dragover { background: rgba(55,138,221,.09); border-color: var(--blue); color: var(--blue-dark); }
+
+    .status-card { padding: 20px; }
+    .status-title { font-weight: 800; margin-bottom: 10px; }
+    .file-info { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .file-info.ok { color: #226615; }
+    .file-info.err { color: #b42318; }
+    .small-note { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 8px; }
+
+    #content { display: none; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px;
+      margin-bottom: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.64);
+      border: 1px solid rgba(255,255,255,.72);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+    .tab {
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 14px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      box-shadow: 0 9px 18px rgba(55,138,221,.22);
+    }
+
+    .tab-content { display: none; padding: 20px; }
+    .tab-content.active { display: block; }
+
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric { padding: 16px; min-height: 92px; box-shadow: none; background: rgba(255,255,255,.74); }
+    .metric-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .metric-value { font-size: 28px; line-height: 1; font-weight: 850; color: var(--text); }
+    .metric-sub { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .metric.green .metric-value { color: var(--green); }
+    .metric.orange .metric-value { color: var(--orange); }
+    .metric.blue .metric-value { color: var(--blue-dark); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .chart-box { padding: 18px; margin-bottom: 16px; background: rgba(255,255,255,.82); }
+    .chart-title { display:flex; justify-content:space-between; gap:12px; align-items:center; font-size: 15px; font-weight: 850; margin-bottom: 12px; }
+    .chart-title span { color: var(--muted); font-size: 12px; font-weight: 500; }
+    .chart { position: relative; height: 320px; }
+    .chart.tall { height: 420px; }
+
+    .table-wrap { overflow: auto; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 780px; }
+    th { position: sticky; top: 0; z-index: 1; background: #f5f8fc; color: #334155; padding: 12px; text-align: left; font-size: 12px; font-weight: 850; white-space: nowrap; }
+    td { padding: 11px 12px; border-top: 1px solid #edf2f7; font-size: 13px; vertical-align: top; }
+    tr:hover td { background: #f8fbff; }
+    .pill { display:inline-flex; padding: 4px 8px; border-radius: 999px; background: rgba(55,138,221,.10); color: var(--blue-dark); font-size: 12px; font-weight: 700; }
+    .empty-state { padding: 28px; color: var(--muted); text-align: center; border: 1px dashed var(--line); border-radius: 16px; background: rgba(255,255,255,.5); }
+    .warning { padding: 12px 14px; border-radius: 14px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; font-size: 13px; line-height: 1.6; margin-bottom: 12px; }
+
+
+
+
+    .detail-switch { display:flex; flex-wrap:wrap; gap:10px; margin: 12px 0 16px; }
+    .detail-switch-btn {
+      appearance:none;
+      border:1px solid rgba(55,138,221,.25);
+      background:rgba(255,255,255,.86);
+      color:var(--blue-dark);
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(24,95,165,.08);
+    }
+    .detail-switch-btn.active {
+      color:#fff;
+      background:linear-gradient(135deg, var(--blue), var(--blue-dark));
+      box-shadow: 0 10px 22px rgba(55,138,221,.22);
+    }
+    .detail-switch-btn .count { margin-left:6px; opacity:.78; font-weight:800; }
+
+    .detail-sections { display: grid; gap: 18px; }
+    .detail-unit { border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.76); overflow: hidden; }
+    .detail-unit-header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding: 16px 18px; background: linear-gradient(135deg, rgba(55,138,221,.10), rgba(255,255,255,.72)); border-bottom: 1px solid var(--line); }
+    .detail-unit-title { font-size: 17px; font-weight: 900; color: var(--text); }
+    .detail-unit-sub { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .detail-unit-kpis { display:flex; flex-wrap:wrap; gap: 8px; justify-content:flex-end; }
+    .mini-pill { display:inline-flex; align-items:center; gap:4px; padding: 6px 9px; border-radius: 999px; background:#f8fbff; border:1px solid #e8eef7; color:#334155; font-size:12px; font-weight:800; }
+    .detail-week { padding: 16px 18px 18px; border-top: 1px solid rgba(219,229,241,.7); }
+    .detail-week:first-of-type { border-top: 0; }
+    .detail-week-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom: 12px; }
+    .detail-week-title { font-size: 14px; font-weight: 900; color: var(--blue-dark); }
+    .detail-week-sub { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .type-summary { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+    .type-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px; background: rgba(99,153,34,.10); color:#365314; border:1px solid rgba(99,153,34,.20); font-size:12px; font-weight:850; white-space:nowrap; }
+    .type-chip strong { font-size:14px; }
+    .detail-total-row td { background:#f8fbff; font-weight:900; color:var(--text); }
+
+
+    .unit-funnel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .unit-card { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.76); }
+    .unit-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .unit-card-title { font-weight: 850; font-size: 15px; }
+    .unit-card-sub { color: var(--muted); font-size: 12px; }
+    .unit-kpis { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:10px; }
+    .unit-kpi { border-radius:12px; padding:9px; background:#f8fbff; border:1px solid #e8eef7; }
+    .unit-kpi span { display:block; color:var(--muted); font-size:11px; margin-bottom:5px; }
+    .unit-kpi strong { font-size:18px; }
+    .mini-chart { position: relative; height: 210px; }
+
+    @media (max-width: 900px) {
+      .container { padding: 16px; }
+      .upload-card, .grid-2, .grid-3, .unit-funnel-grid { grid-template-columns: 1fr; }
+      .detail-unit-header, .detail-week-head { flex-direction: column; align-items: stretch; }
+      .detail-unit-kpis, .type-summary { justify-content: flex-start; }
+      .hero-top, .hero-actions { flex-direction: column; align-items: stretch; }
+      .chart { height: 280px; }
+      .tabs { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>📊 又松大學招生數據 Dashboard</h1>
+          <p>部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。仍保留手動上傳功能，方便本機測試。</p>
+        </div>
+        <div class="hero-actions">
+          <div class="lang-switch" aria-label="Language switch">
+            <button class="lang-btn" type="button" data-lang="zh-CN" onclick="setLanguage('zh-CN')">中文简体</button>
+            <button class="lang-btn" type="button" data-lang="ko" onclick="setLanguage('ko')">한국어</button>
+          </div>
+          <div class="badge">data.xlsx → Dashboard 自動展示</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="upload-card">
+      <div class="upload">
+        <strong>Excel 資料來源</strong>
+        <p class="small-note">部署版會優先自動讀取同資料夾的 data.xlsx；也支援手動上傳 .xlsx / .xls。</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" />
+        <div class="upload-actions">
+          <button class="btn" type="button" onclick="document.getElementById('fileInput').click();">📤 選擇 Excel 文件</button>
+          <button class="btn secondary" type="button" onclick="resetDashboard();">重新載入</button>
+        </div>
+        <div class="drop-zone" id="dropZone">也可以把 Excel 直接拖曳到這裡</div>
+      </div>
+      <div class="status-card">
+        <div class="status-title">資料讀取狀態</div>
+        <div class="file-info" id="fileInfo">正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。</div>
+        <div class="small-note" id="sheetInfo"></div>
+      </div>
+    </section>
+
+    <main id="content">
+      <nav class="tabs" aria-label="Dashboard tabs">
+        <button class="tab active" type="button" onclick="switchTab(0)">總覽</button>
+        <button class="tab" type="button" onclick="switchTab(1)">招生漏斗</button>
+        <button class="tab" type="button" onclick="switchTab(2)">學院/學科</button>
+        <button class="tab" type="button" onclick="switchTab(3)">申請類型</button>
+        <button class="tab" type="button" onclick="switchTab(4)">授課語言</button>
+        <button class="tab" type="button" onclick="switchTab(5)">月報重點</button>
+        <button class="tab" type="button" onclick="switchTab(6)">資料明細</button>
+      </nav>
+
+      <section class="tab-content active">
+        <div id="warnings"></div>
+        <div class="metrics" id="overviewMetrics"></div>
+        <div class="grid-2">
+          <div class="chart-box">
+            <div class="chart-title">招生階段進度 <span>整體人數</span></div>
+            <div class="chart"><canvas id="chart0"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">三大招生板塊 <span>學部 / 大學院 / SolBridge</span></div>
+            <div class="chart"><canvas id="chartCategory"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-content">
+        <div class="metrics" id="funnelMetrics"></div>
+        <div class="grid-2">
+          <div class="chart-box">
+            <div class="chart-title">整體漏斗人數 <span>三個招生板塊合計</span></div>
+            <div class="chart"><canvas id="chartFunnelCount"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">整體階段轉化率 <span>避免分母為 0 時顯示 NaN</span></div>
+            <div class="chart"><canvas id="chart1"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">學部 / 大學院 / SolBridge 獨立招生漏斗 <span>每個板塊單獨計算，不混合</span></div>
+          <div class="unit-funnel-grid" id="unitFunnelCards"></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>入學</th><th>面試/申請</th><th>繳費/錄取</th><th>入學/申請</th></tr></thead><tbody id="unitFunnelTableBody"></tbody></table></div>
+      </section>
+
+      <section class="tab-content">
+        <div class="chart-box">
+          <div class="chart-title">學科 / 專業申請數 Top 15 <span>同一學科跨 편입 / 신입 / 교환 / SA 自動加總</span></div>
+          <div class="chart tall"><canvas id="chart2"></canvas></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>學科/專業</th><th>招生板塊</th><th>所屬學院</th><th>包含類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>入學</th><th>入學轉化率</th></tr></thead><tbody id="collegeTableBody"></tbody></table></div>
+      </section>
+
+      <section class="tab-content">
+        <div class="grid-2">
+          <div class="chart-box">
+            <div class="chart-title">按申請類型分布 <span>新入 / 編入 / 交換 / 學位等</span></div>
+            <div class="chart"><canvas id="chart3"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">申請類型明細 <span>申請數與入學數</span></div>
+            <div class="table-wrap"><table><thead><tr><th>類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>入學</th></tr></thead><tbody id="typeTableBody"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-content">
+        <div class="metrics" id="langMetrics"></div>
+        <div class="grid-2">
+          <div class="chart-box">
+            <div class="chart-title">授課語言申請對比 <span>依申請數統計，不是列數</span></div>
+            <div class="chart"><canvas id="chart4"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">語言 × 招生板塊 <span>交叉分布</span></div>
+            <div class="table-wrap"><table><thead><tr><th>授課語言</th><th>學部</th><th>大學院</th><th>SolBridge</th><th>合計</th></tr></thead><tbody id="langTableBody"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-content">
+        <div class="metrics" id="monthlyMetrics"></div>
+        <div class="chart-box">
+          <div class="chart-title">月報關鍵指標 <span>申請 / 繳費 / 標入 / 入學</span></div>
+          <div class="chart"><canvas id="chart5"></canvas></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>學院/學科</th><th>申請</th><th>繳費</th><th>標入</th><th>入學</th><th>備註</th></tr></thead><tbody id="monthlyTableBody"></tbody></table></div>
+      </section>
+
+      <section class="tab-content">
+        <div class="chart-box">
+          <div class="chart-title">已解析資料明細 <span id="rowCountLabel"></span></div>
+          <div class="small-note" style="margin-bottom:12px;">資料明細可用「學部 / 大學院 / SolBridge」按鈕切換查看，不需要一路往下滑。此區不展示姓名欄；若姓名未填，預設空白，不佔用 Dashboard 版面。</div>
+          <div class="detail-switch" id="detailSwitch" aria-label="資料明細招生板塊切換"></div>
+          <div class="detail-sections" id="detailSections"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+'use strict';
+
+
+const textNodeSources = new WeakMap();
+let currentLang = localStorage.getItem('wsuDashboardLang') || 'zh-CN';
+const AUTO_DATA_FILE = 'data.xlsx';
+
+const KO_PHRASES = {
+
+  '中文简体': '중국어 간체',
+  '中文簡體': '중국어 간체',
+  '韩语': '한국어',
+  '韓語': '한국어',
+  '學部': '학부',
+  '学部': '학부',
+  '大學院': '대학원',
+  '大学院': '대학원',
+  '研究生': '대학원',
+  '國際商學院': '국제경영대학',
+  '国际商学院': '국제경영대학',
+  '招生': '모집',
+  '板塊': '단위',
+  '单位': '단위',
+  '資料': '데이터',
+  '数据': '데이터',
+  '明細': '상세',
+  '详情': '상세',
+  '學院': '단과대',
+  '学院': '단과대',
+  '學科': '학과',
+  '学科': '학과',
+  '專業': '전공',
+  '专业': '전공',
+  '申請類型': '지원 유형',
+  '申请类型': '지원 유형',
+  '授課語言': '수업 언어',
+  '授课语言': '수업 언어',
+  '中文': '중국어',
+  '簡體': '간체',
+  '简体': '간체',
+  '已繳費': '등록금 납부 완료',
+  '已缴费': '등록금 납부 완료',
+  '已標入': '표준입학 발급 완료',
+  '已标入': '표준입학 발급 완료',
+  '已入學': '입학 완료',
+  '已入学': '입학 완료',
+  '錄取後流失': '합격 후 이탈',
+  '录取后流失': '합격 후 이탈',
+  '錄取 - 繳費': '합격 - 등록금 납부',
+  '录取 - 缴费': '합격 - 등록금 납부',
+  '繳費率': '등록금 납부율',
+  '缴费率': '등록금 납부율',
+  '尚未形成繳費數據/或原表未勾選': '아직 등록금 납부 데이터가 없거나 원본 표에서 체크되지 않았습니다',
+  '尚未形成缴费数据/或原表未勾选': '아직 등록금 납부 데이터가 없거나 원본 표에서 체크되지 않았습니다',
+  '申請占比': '지원 비중',
+  '申请占比': '지원 비중',
+  'of 申請': '지원 대비',
+  'of 申请': '지원 대비',
+  '共': '총',
+  '解析': '파싱',
+  '正在讀取': '읽는 중',
+  '正在读取': '읽는 중',
+  '已載入': '불러오기 완료',
+  '已载入': '불러오기 완료',
+  '本週': '이번 주',
+  '本周': '이번 주',
+  '類型匯總': '유형별 합계',
+  '类型汇总': '유형별 합계',
+  '合計': '합계',
+  '合计': '합계',
+  '已隱藏': '숨김',
+  '已隐藏': '숨김',
+  '未標週次資料': '주차 미표기 데이터',
+  '未标周次数据': '주차 미표기 데이터',
+  '未標周次资料': '주차 미표기 데이터',
+  '未標週次': '주차 미표기',
+  '未标周次': '주차 미표기',
+  '空白資料': '공백 데이터',
+  '空白数据': '공백 데이터',
+  '可展示': '표시 가능한',
+  '不展示': '표시하지 않음',
+  '沒有': '없음',
+  '没有': '없음',
+  '目前': '현재',
+  '此區': '이 영역',
+  '此区': '이 영역',
+  '上方': '위쪽',
+  '按鈕': '버튼',
+  '按钮': '버튼',
+  '切換': '전환',
+  '切换': '전환',
+  '查看': '확인',
+  '不需要': '필요 없음',
+  '一路往下滑': '계속 아래로 스크롤',
+  '不展示姓名欄位': '이름 열은 표시하지 않음',
+  '不展示姓名欄': '이름 열은 표시하지 않음',
+  '姓名': '이름',
+  '欄位': '열',
+  '栏位': '열',
+  '基準日': '기준일',
+  '基准日': '기준일',
+  '年度': '연도',
+  '學期': '학기',
+  '学期': '학기',
+  '週次': '주차',
+  '周次': '주차',
+  '詢問': '문의',
+  '询问': '문의',
+  '申請': '지원',
+  '申请': '지원',
+  '面試': '면접',
+  '面试': '면접',
+  '錄取': '합격',
+  '录取': '합격',
+  '通知': '안내',
+  '繳費': '등록금 납부',
+  '缴费': '등록금 납부',
+  '標入': '표준입학',
+  '标入': '표준입학',
+  '入學': '입학',
+  '入学': '입학',
+  '備註': '비고',
+  '备注': '비고',
+  '所屬': '소속',
+  '所属': '소속',
+  '包含': '포함',
+  '語言': '언어',
+  '语言': '언어',
+  '類型': '유형',
+  '类型': '유형',
+  '英文': '영어',
+  '韓文': '한국어',
+  '韩文': '한국어',
+  '未填寫': '미입력',
+  '未填写': '미입력',
+  '未分類': '미분류',
+  '未分类': '미분류',
+  '人數': '인원',
+  '人数': '인원',
+  '申請數': '지원자 수',
+  '申请数': '지원자 수',
+  '轉化率': '전환율',
+  '转化率': '전환율',
+  '名': '명',
+  '行': '행',
+  '又松大學招生 Dashboard｜自動部署版': '우송대학교 모집 Dashboard｜Excel 자동 시각화',
+  '又松大學招生數據 Dashboard': '우송대학교 모집 데이터 Dashboard',
+  '部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。仍保留手動上傳功能，方便本機測試。': '「우송대학교 모집 시스템_간소화 버전」Excel을 업로드하면 학부, 대학원, SolBridge 3개 Sheet를 자동으로 읽고, 총괄 현황, 3개 모집 단위별 독립 퍼널, 학과별 합산 지원자 차트, 지원 유형, 수업 언어, 월간 핵심 지표를 생성합니다.',
+  'data.xlsx → Dashboard 自動展示': 'Excel → Dashboard 실시간 표시',
+  'Excel 資料來源': 'Excel 파일 업로드',
+  '部署版會優先自動讀取同資料夾的 data.xlsx；也支援手動上傳 .xlsx / .xls。': '.xlsx / .xls 파일을 지원합니다. 「学部/學部」「大学院/大學院」「SolBridge」 등 Sheet 이름과 표 헤더 위치를 자동 인식하도록 최적화했습니다.',
+  '📤 選擇 Excel 文件': '📤 Excel 파일 선택',
+  '重新載入': '다시 불러오기',
+  '也可以把 Excel 直接拖曳到這裡': 'Excel 파일을 이곳으로 드래그해도 됩니다',
+  '資料讀取狀態': '읽기 상태',
+  '正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。': '아직 데이터를 불러오지 않았습니다. Excel을 먼저 업로드하세요.',
+  'Dashboard tabs': 'Dashboard 탭',
+  '總覽': '총괄',
+  '招生漏斗': '모집 퍼널',
+  '學院/學科': '단과대/학과',
+  '申請類型': '지원 유형',
+  '授課語言': '수업 언어',
+  '月報重點': '월간 핵심',
+  '資料明細': '데이터 상세',
+  '招生階段進度': '모집 단계 진행 현황',
+  '整體人數': '전체 인원',
+  '三大招生板塊': '3대 모집 단위',
+  '學部 / 大學院 / SolBridge': '학부 / 대학원 / SolBridge',
+  '整體漏斗人數': '전체 퍼널 인원',
+  '三個招生板塊合計': '3개 모집 단위 합계',
+  '整體階段轉化率': '전체 단계 전환율',
+  '避免分母為 0 時顯示 NaN': '분모가 0일 때 NaN 표시 방지',
+  '學部 / 大學院 / SolBridge 獨立招生漏斗': '학부 / 대학원 / SolBridge 독립 모집 퍼널',
+  '每個板塊單獨計算，不混合': '각 단위를 별도로 계산하며 합산하지 않음',
+  '招生板塊': '모집 단위',
+  '學科 / 專業申請數 Top 15': '학과 / 전공 지원자 수 Top 15',
+  '同一學科跨 편입 / 신입 / 교환 / SA 自動加總': '동일 학과는 편입 / 신입 / 교환 / SA를 자동 합산',
+  '學科/專業': '학과/전공',
+  '所屬學院': '소속 단과대',
+  '包含類型': '포함 유형',
+  '入學轉化率': '입학 전환율',
+  '按申請類型分布': '지원 유형별 분포',
+  '新入 / 編入 / 交換 / 學位等': '신입 / 편입 / 교환 / 학위 등',
+  '申請類型明細': '지원 유형 상세',
+  '申請數與入學數': '지원자 수와 입학자 수',
+  '類型': '유형',
+  '授課語言申請對比': '수업 언어별 지원 비교',
+  '依申請數統計，不是列數': '행 수가 아니라 지원자 수 기준',
+  '語言 × 招生板塊': '언어 × 모집 단위',
+  '交叉分布': '교차 분포',
+  '授課語言': '수업 언어',
+  '合計': '합계',
+  '月報關鍵指標': '월간 핵심 지표',
+  '申請 / 繳費 / 標入 / 入學': '지원 / 등록금 납부 / 표준입학 / 입학',
+  '學院/學科': '단과대/학과',
+  '備註': '비고',
+  '已解析資料明細': '파싱된 데이터 상세',
+  '資料明細可用「學部 / 大學院 / SolBridge」按鈕切換查看，不需要一路往下滑。此區不展示姓名欄；若姓名未填，預設空白，不佔用 Dashboard 版面。': '데이터 상세는 「학부 / 대학원 / SolBridge」 버튼으로 전환해 볼 수 있어 아래로 계속 스크롤할 필요가 없습니다. 이 영역에는 이름 열을 표시하지 않으며, 이름이 비어 있으면 기본 공백으로 처리해 Dashboard 공간을 차지하지 않습니다.',
+  '資料明細招生板塊切換': '데이터 상세 모집 단위 전환',
+  '詢問': '문의',
+  '申請': '지원',
+  '面試': '면접',
+  '錄取': '합격',
+  '通知': '안내',
+  '繳費': '등록금 납부',
+  '標入': '표준입학',
+  '入學': '입학',
+  '入學 / 申請': '입학 / 지원',
+  '若 Excel 無此欄位則為 0': 'Excel에 해당 열이 없으면 0으로 표시',
+  '人數': '인원',
+  '申請數': '지원자 수',
+  '轉化率(%)': '전환율(%)',
+  '面試/申請': '면접/지원',
+  '錄取/面試': '합격/면접',
+  '通知/錄取': '안내/합격',
+  '繳費/錄取': '등록금 납부/합격',
+  '標入/繳費': '표준입학/등록금 납부',
+  '入學/繳費': '입학/등록금 납부',
+  '入學/申請': '입학/지원',
+  '單獨漏斗：申請 → 入學': '독립 퍼널: 지원 → 입학',
+  '英文': '영어',
+  '韓文': '한국어',
+  '未填寫': '미입력',
+  '未分類': '미분류',
+  '未標示年度': '연도 미표기',
+  '未標示學期': '학기 미표기',
+  '未標示週次': '주차 미표기',
+  '目前沒有可展示資料': '현재 표시할 데이터가 없습니다',
+  '沒有解析到此招生板塊資料': '이 모집 단위의 데이터를 파싱하지 못했습니다',
+  '此區已隱藏未標週次的資料列；目前沒有可展示的週次資料。': '주차가 표시되지 않은 데이터 행은 숨겼으며, 현재 표시할 주차 데이터가 없습니다.',
+  '沒有標註週次的空白資料不展示': '주차가 비어 있는 데이터는 표시하지 않습니다',
+  '目前只顯示此招生板塊，可用上方按鈕切換；不展示姓名欄位。': '현재 이 모집 단위만 표시합니다. 위 버튼으로 전환할 수 있으며 이름 열은 표시하지 않습니다.',
+  '未標週次資料不展示。': '주차 미표기 데이터는 표시하지 않습니다.',
+  '本週類型匯總': '이번 주 유형별 합계',
+  '本週合計': '이번 주 합계',
+  '年度': '연도',
+  '學期': '학기',
+  '週次': '주차',
+  '學院/專業': '단과대/전공',
+  '語言': '언어',
+  '基準日': '기준일',
+  '已隱藏': '숨김',
+  '行': '행',
+  '名': '명',
+  '共解析': '총 파싱',
+  '行統計資料': '행 통계 데이터',
+  '正在讀取': '읽는 중',
+  '讀取失敗': '읽기 실패',
+  '檔案讀取失敗，請重新選擇 Excel。': '파일 읽기에 실패했습니다. Excel을 다시 선택하세요.',
+  'XLSX 讀取套件沒有成功載入。請確認網路可連接 CDN，或將 xlsx.full.min.js 放到同一資料夾後改成本地引用。': 'XLSX 읽기 라이브러리를 불러오지 못했습니다. CDN 연결을 확인하거나 xlsx.full.min.js를 같은 폴더에 넣고 로컬 경로로 바꾸세요.',
+  'Chart.js 沒有成功載入。請確認網路可連接 CDN，否則圖表無法繪製。': 'Chart.js를 불러오지 못했습니다. CDN 연결을 확인하세요. 그렇지 않으면 차트를 그릴 수 없습니다.',
+  '沒有解析到可用資料。已找到 Sheet': '사용 가능한 데이터를 파싱하지 못했습니다. 찾은 Sheet',
+  '未找到': '찾지 못함',
+  '對應 Sheet': '대응 Sheet',
+  '存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、入學」等欄位。': '존재하지만 데이터 행을 파싱하지 못했습니다. 헤더에 「지원, 면접, 합격, 등록금 납부, 표준입학, 입학」 등의 열이 있는지 확인하세요.',
+  '又松大學招生 Dashboard｜自動部署版': '우송대학교 모집 Dashboard｜자동 배포 버전',
+  '部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。仍保留手動上傳功能，方便本機測試。': '배포 후 같은 폴더의 data.xlsx를 자동으로 읽습니다. Excel 파일만 업데이트하면 리더가 같은 링크를 새로고침하여 최신 Dashboard를 볼 수 있습니다. 로컬 테스트를 위해 수동 업로드 기능도 유지합니다.',
+  'data.xlsx → Dashboard 自動展示': 'data.xlsx → Dashboard 자동 표시',
+  'Excel 資料來源': 'Excel 데이터 소스',
+  '部署版會優先自動讀取同資料夾的 data.xlsx；也支援手動上傳 .xlsx / .xls。': '배포 버전은 같은 폴더의 data.xlsx를 우선 자동으로 읽으며, .xlsx / .xls 수동 업로드도 지원합니다.',
+  '資料讀取狀態': '데이터 읽기 상태',
+  '正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。': 'data.xlsx 자동 읽기를 시도 중입니다. 배포 데이터 파일이 없으면 Excel을 수동으로 업로드할 수 있습니다.',
+  '正在自動讀取部署資料': '배포 데이터를 자동으로 읽는 중',
+  '找不到 data.xlsx，可先手動上傳 Excel，或把最新 Excel 重新命名為 data.xlsx 後放到同一部署資料夾。': 'data.xlsx를 찾을 수 없습니다. 먼저 Excel을 수동으로 업로드하거나 최신 Excel 파일명을 data.xlsx로 바꿔 같은 배포 폴더에 넣으세요.',
+  '已自動載入': '자동 불러오기 완료',
+};
+
+function toSimplifiedBasic(text) {
+  const map = {
+    '學':'学','數':'数','據':'据','儀':'仪','錶':'表','後':'后','動':'动','讀':'读','總':'总','覽':'览','獨':'独','塊':'块','專':'专','業':'业','圖':'图','類':'类','語':'语','與':'与','點':'点','檔':'档','案':'案','支':'支','援':'援','優':'优','識':'识','稱':'称','頭':'头','選':'选','擇':'择','載':'载','這':'这','裡':'里','態':'态','還':'还','請':'请','階':'阶','進':'进','體':'体','錄':'录','繳':'缴','費':'费','標':'标','詢':'询','問':'问','試':'试','為':'为','時':'时','顯':'显','應':'应','計':'计','顯':'显','顯':'显','則':'则','轉':'转','換':'换','匯':'汇','週':'周','註':'注','隱':'隐','區':'区','鈕':'钮','欄':'栏','預':'预','設':'设','佔':'占','頁':'页','續':'续','無':'无','聯':'联','絡':'络','錯':'错','誤':'误','敗':'败','發':'发','現':'现','寫':'写','簡':'简','體':'体','韓':'韩','國':'国','際':'际','商':'商','院':'院','彙':'汇','構':'构','關':'关','鍵':'键','備':'备','註':'注','聯':'联','網':'网','寬':'宽','壓':'压','圓':'圆','這':'这','產':'产','處':'处','線':'线','內':'内','標':'标','準':'准','頁':'页','並':'并','將':'将','產':'产','學':'学','覽':'览','壓':'压','對':'对','匯':'汇','區':'区','別':'别','從':'从','續':'续','務':'务','與':'与','欄':'栏'
+  };
+  return String(text).replace(/[\u3400-\u9fff]/g, ch => map[ch] || ch);
+}
+
+function trText(value) {
+  let text = String(value ?? '');
+  if (currentLang === 'zh-CN') return toSimplifiedBasic(text);
+  const entries = Object.entries(KO_PHRASES).sort((a, b) => b[0].length - a[0].length);
+  for (const [source, target] of entries) text = text.split(source).join(target);
+  // Korean UI mode: remove Chinese list punctuation and common Chinese-style separators from generated interface text.
+  text = text.replace(/、/g, ', ').replace(/｜/g, ' | ');
+  return text;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLang === 'ko' ? 'ko' : 'zh-CN';
+  document.title = trText('又松大學招生 Dashboard｜自動部署版');
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    btn.textContent = currentLang === 'ko'
+      ? (btn.dataset.lang === 'zh-CN' ? '중국어 간체' : '한국어')
+      : (btn.dataset.lang === 'zh-CN' ? '中文简体' : '韩语');
+  });
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent || ['SCRIPT','STYLE','TEXTAREA','NOSCRIPT'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+      if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    if (!textNodeSources.has(node)) textNodeSources.set(node, node.nodeValue);
+    node.nodeValue = trText(textNodeSources.get(node));
+  });
+}
+
+function setLanguage(lang) {
+  currentLang = lang === 'ko' ? 'ko' : 'zh-CN';
+  localStorage.setItem('wsuDashboardLang', currentLang);
+  if (dashData && Array.isArray(dashData.all)) refreshDashboard();
+  else applyLanguage();
+}
+
+function localizeChartConfig(value) {
+  if (typeof value === 'string') return trText(value);
+  if (Array.isArray(value)) return value.map(localizeChartConfig);
+  if (value && typeof value === 'object') {
+    const output = {};
+    Object.entries(value).forEach(([key, val]) => {
+      output[key] = typeof val === 'function' ? val : localizeChartConfig(val);
+    });
+    return output;
+  }
+  return value;
+}
+
+let chartsObj = {};
+let dashData = null;
+let selectedDetailUnit = '學部';
+
+const SHEET_RULES = [
+  { key: 'ug', label: '學部', keywords: ['學部', '学部', '本科', '학부'] },
+  { key: 'gr', label: '大學院', keywords: ['大學院', '大学院', '研究生', '대학원'] },
+  { key: 'sol', label: 'SolBridge', keywords: ['solbridge', 'sol bridge', '國際商學院', '国际商学院'] }
+];
+
+const METRICS = ['inquiry','apply','interview','admit','notify','payment','standard','enrolled'];
+const METRIC_LABELS = {
+  inquiry: '詢問', apply: '申請', interview: '面試', admit: '錄取', notify: '通知', payment: '繳費', standard: '標入', enrolled: '入學'
+};
+const HEADER_ALIASES = {
+  year: ['統計年度','统计年度','年度','year'],
+  term: ['學期','学期','term'],
+  week: ['週次','周次','week'],
+  date: ['資料基準日期','数据基准日期','基準日期','基准日期','date'],
+  college: ['申請學院','申请学院','學院','学院','college','대학'],
+  major: ['申請專業','申请专业','申請學科','申请学科','專業','专业','學科','学科','전공','학과','major'],
+  degree: ['學位','学位','degree'],
+  type: ['申請類型','申请类型','類型','类型','入學類型','入学类型','입학구분','type'],
+  language: ['授課語言','授课语言','語言','语言','수업언어','language'],
+  inquiry: ['詢問','询问','諮詢','咨询','문의'],
+  apply: ['申請','申请','지원','apply'],
+  interview: ['面試','面试','interview'],
+  admit: ['錄取','录取','합격','admit'],
+  notify: ['通知','繳費通知','缴费通知','notification'],
+  payment: ['繳費','缴费','학비납부','payment'],
+  standard: ['標入','标入','標準入學','标准入学','標準入學通知','标准入学通知','standard'],
+  enrolled: ['入學','入学','학번','enrolled'],
+  remark: ['備註','备注','remark','note']
+};
+
+const COLORS = ['#378ADD', '#639922', '#BA7517', '#E24B4A', '#185FA5', '#7C3AED', '#0F766E', '#C2410C', '#64748B'];
+
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
+
+dropZone.addEventListener('dragover', (event) => {
+  event.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (event) => {
+  event.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFile(event.dataTransfer.files[0]);
+});
+
+applyLanguage();
+
+
+async function loadHostedExcel() {
+  if (!window.XLSX) {
+    setStatus('❌ XLSX 讀取套件沒有成功載入。請確認網路可連接 CDN，或將 xlsx.full.min.js 放到同一資料夾後改成本地引用。', 'err');
+    return;
+  }
+  if (!window.Chart) {
+    setStatus('❌ Chart.js 沒有成功載入。請確認網路可連接 CDN，否則圖表無法繪製。', 'err');
+    return;
+  }
+
+  setStatus(`正在自動讀取部署資料：${AUTO_DATA_FILE} ...`, '');
+  try {
+    const response = await fetch(`${AUTO_DATA_FILE}?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`找不到 ${AUTO_DATA_FILE}，可先手動上傳 Excel，或把最新 Excel 重新命名為 data.xlsx 後放到同一部署資料夾。`);
+    }
+    const buffer = await response.arrayBuffer();
+    const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true, cellText: false });
+    dashData = parseWorkbook(wb);
+    if (!dashData.all.length) {
+      const foundSheets = wb.SheetNames.join('、');
+      throw new Error(`沒有解析到可用資料。已找到 Sheet：${foundSheets}`);
+    }
+    setStatus(`✅ 已自動載入：${AUTO_DATA_FILE}｜共解析 ${dashData.all.length} 行統計資料`, 'ok');
+    document.getElementById('sheetInfo').innerHTML = dashData.sheetMessages.map(m => `<div>${escapeHtml(trText(m))}</div>`).join('');
+    document.getElementById('content').style.display = 'block';
+    refreshDashboard();
+  } catch (error) {
+    console.warn(error);
+    setStatus(`⚠️ ${error.message}`, '');
+    document.getElementById('content').style.display = 'none';
+  }
+}
+
+function handleFile(file) {
+  if (!file) return;
+  if (!window.XLSX) {
+    setStatus('❌ XLSX 讀取套件沒有成功載入。請確認網路可連接 CDN，或將 xlsx.full.min.js 放到同一資料夾後改成本地引用。', 'err');
+    return;
+  }
+  if (!window.Chart) {
+    setStatus('❌ Chart.js 沒有成功載入。請確認網路可連接 CDN，否則圖表無法繪製。', 'err');
+    return;
+  }
+
+  setStatus(`正在讀取：${escapeHtml(file.name)} ...`, '');
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true, cellText: false });
+      dashData = parseWorkbook(wb);
+      if (!dashData.all.length) {
+        const foundSheets = wb.SheetNames.join('、');
+        throw new Error(`沒有解析到可用資料。已找到 Sheet：${foundSheets}`);
+      }
+      setStatus(`✅ 已載入：${escapeHtml(file.name)}｜共解析 ${dashData.all.length} 行統計資料`, 'ok');
+      document.getElementById('sheetInfo').innerHTML = dashData.sheetMessages.map(m => `<div>${escapeHtml(m)}</div>`).join('');
+      document.getElementById('content').style.display = 'block';
+      refreshDashboard();
+    } catch (error) {
+      console.error(error);
+      setStatus(`❌ 讀取失敗：${escapeHtml(error.message)}`, 'err');
+      document.getElementById('content').style.display = 'none';
+    }
+  };
+  reader.onerror = function() {
+    setStatus('❌ 檔案讀取失敗，請重新選擇 Excel。', 'err');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseWorkbook(wb) {
+  const result = { ug: [], gr: [], sol: [], all: [], warnings: [], sheetMessages: [] };
+  const used = new Set();
+
+  SHEET_RULES.forEach(rule => {
+    const sheetName = findSheetName(wb.SheetNames, rule.keywords, used);
+    if (!sheetName) {
+      result.warnings.push(`未找到「${rule.label}」對應 Sheet。`);
+      result.sheetMessages.push(`⚠️ ${rule.label}：未找到 Sheet`);
+      return;
+    }
+    used.add(sheetName);
+    const rows = parseSheet(wb.Sheets[sheetName], rule.label);
+    result[rule.key] = rows;
+    result.all.push(...rows);
+    result.sheetMessages.push(`✅ ${rule.label}：${sheetName}｜${rows.length} 行`);
+    if (!rows.length) result.warnings.push(`「${sheetName}」存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、入學」等欄位。`);
+  });
+  return result;
+}
+
+function findSheetName(sheetNames, keywords, used) {
+  const normalizedKeywords = keywords.map(normalizeText);
+  return sheetNames.find(name => {
+    if (used.has(name)) return false;
+    const n = normalizeText(name);
+    return normalizedKeywords.some(k => n.includes(k));
+  });
+}
+
+function parseSheet(ws, categoryLabel) {
+  if (!ws) return [];
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
+  const headerRowIndex = findHeaderRowIndex(data);
+  if (headerRowIndex < 0) return [];
+
+  const headerIndex = buildHeaderIndex(data[headerRowIndex]);
+  const rows = [];
+  let blankCount = 0;
+  for (let i = headerRowIndex + 1; i < data.length; i++) {
+    const row = data[i] || [];
+    const obj = makeRowObject(row, headerIndex, categoryLabel);
+    const hasData = obj.apply || obj.interview || obj.admit || obj.payment || obj.standard || obj.enrolled || obj.dim1 || obj.dim2;
+    if (!hasData) {
+      blankCount += 1;
+      if (blankCount >= 5) break;
+      continue;
+    }
+    blankCount = 0;
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function findHeaderRowIndex(data) {
+  for (let i = 0; i < Math.min(data.length, 30); i++) {
+    const idx = buildHeaderIndex(data[i] || []);
+    const metricHits = METRICS.filter(key => idx[key] !== undefined).length;
+    const dimHits = ['college','major','type','degree','language'].filter(key => idx[key] !== undefined).length;
+    if (idx.apply !== undefined && metricHits >= 4) return i;
+    if (metricHits >= 5 && dimHits >= 1) return i;
+  }
+  return -1;
+}
+
+function buildHeaderIndex(row) {
+  const idx = {};
+  row.forEach((cell, col) => {
+    const text = normalizeText(cell);
+    if (!text) return;
+    Object.entries(HEADER_ALIASES).forEach(([key, aliases]) => {
+      if (idx[key] !== undefined) return;
+      const normalizedAliases = aliases.map(normalizeText);
+      if (normalizedAliases.includes(text)) idx[key] = col;
+    });
+  });
+  return idx;
+}
+
+function makeRowObject(row, idx, categoryLabel) {
+  const get = key => idx[key] !== undefined ? cleanCell(row[idx[key]]) : '';
+  const num = key => toNumber(idx[key] !== undefined ? row[idx[key]] : 0);
+  const major = get('major');
+  const degree = get('degree');
+  const type = get('type') || degree || '未分類';
+  const college = get('college');
+  let language = get('language');
+  if (!language) language = inferLanguage([major, college, type, categoryLabel].join(' '));
+
+  return {
+    category: categoryLabel,
+    year: get('year'),
+    term: get('term'),
+    week: get('week'),
+    date: get('date'),
+    dim1: categoryLabel === 'SolBridge' ? 'SolBridge' : (college || '未填寫'),
+    dim2: major || degree || '未填寫',
+    dim3: type,
+    dim4: language || '未填寫',
+    inquiry: num('inquiry'),
+    apply: num('apply'),
+    interview: num('interview'),
+    admit: num('admit'),
+    notify: num('notify'),
+    payment: num('payment'),
+    standard: num('standard'),
+    enrolled: num('enrolled'),
+    remark: get('remark')
+  };
+}
+
+function refreshDashboard() {
+  const all = dashData.all;
+  const totals = calcTotals(all);
+  const categoryMap = groupBy(all, r => r.category);
+  const subjectMap = groupBySubject(all);
+  const typeMap = groupBy(all, r => r.dim3 || '未分類');
+  const langMap = groupBy(all, r => normalizeLanguage(r.dim4));
+
+  renderWarnings();
+  renderOverview(totals, categoryMap);
+  renderFunnel(totals, categoryMap);
+  renderCollege(subjectMap);
+  renderType(typeMap);
+  renderLanguage(langMap, all);
+  renderMonthly(totals, subjectMap);
+  renderDetails(all);
+  applyLanguage();
+}
+
+function renderWarnings() {
+  const box = document.getElementById('warnings');
+  if (!dashData.warnings.length) {
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = dashData.warnings.map(w => `<div class="warning">${escapeHtml(w)}</div>`).join('');
+}
+
+function renderOverview(totals, categoryMap) {
+  document.getElementById('overviewMetrics').innerHTML = [
+    metricHtml('詢問', totals.inquiry, 'blue', '若 Excel 無此欄位則為 0'),
+    metricHtml('申請', totals.apply, 'blue'),
+    metricHtml('面試', totals.interview),
+    metricHtml('錄取', totals.admit),
+    metricHtml('通知', totals.notify),
+    metricHtml('繳費', totals.payment, 'green'),
+    metricHtml('標入', totals.standard, 'orange'),
+    metricHtml('入學', totals.enrolled, 'green'),
+    metricHtml('入學轉化率', `${safePct(totals.enrolled, totals.apply)}%`, 'blue', '入學 / 申請')
+  ].join('');
+
+  createChart('chart0', {
+    type: 'bar',
+    data: {
+      labels: ['詢問','申請','面試','錄取','通知','繳費','標入','入學'],
+      datasets: [{ label: '人數', data: METRICS.map(k => totals[k]), backgroundColor: COLORS }]
+    },
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
+
+  const labels = Object.keys(categoryMap);
+  createChart('chartCategory', {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: labels.map(k => categoryMap[k].apply), backgroundColor: COLORS }] },
+    options: chartOptions({ legend: true })
+  });
+}
+
+function renderFunnel(totals, categoryMap) {
+  const ratios = [
+    ['面試/申請', totals.interview, totals.apply],
+    ['錄取/面試', totals.admit, totals.interview],
+    ['通知/錄取', totals.notify, totals.admit],
+    ['繳費/錄取', totals.payment, totals.admit],
+    ['標入/繳費', totals.standard, totals.payment],
+    ['入學/繳費', totals.enrolled, totals.payment]
+  ];
+  document.getElementById('funnelMetrics').innerHTML = ratios.map(([label, n, d]) => metricHtml(label, `${safePct(n,d)}%`, '', `${formatNum(n)} / ${formatNum(d)}`)).join('');
+
+  createChart('chartFunnelCount', {
+    type: 'bar',
+    data: {
+      labels: ['申請','面試','錄取','通知','繳費','標入','入學'],
+      datasets: [{ label: '人數', data: ['apply','interview','admit','notify','payment','standard','enrolled'].map(k => totals[k]), backgroundColor: COLORS[0] }]
+    },
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
+
+  createChart('chart1', {
+    type: 'line',
+    data: {
+      labels: ratios.map(r => r[0]),
+      datasets: [{ label: '轉化率(%)', data: ratios.map(r => Number(safePct(r[1], r[2]))), borderColor: COLORS[1], backgroundColor: 'rgba(99,153,34,.15)', fill: true, tension: .35, pointRadius: 4 }]
+    },
+    options: chartOptions({ legend: false, pctAxis: true })
+  });
+
+  renderUnitFunnels(categoryMap);
+}
+
+function renderUnitFunnels(categoryMap) {
+  const unitOrder = ['學部', '大學院', 'SolBridge'];
+  const units = unitOrder.map(label => [label, categoryMap[label] || emptyTotals()]);
+
+  ['chartFunnelUnit0','chartFunnelUnit1','chartFunnelUnit2'].forEach(destroyChart);
+
+  document.getElementById('unitFunnelCards').innerHTML = units.map(([label, v], idx) => `
+    <div class="unit-card">
+      <div class="unit-card-head">
+        <div>
+          <div class="unit-card-title">${escapeHtml(label)}</div>
+          <div class="unit-card-sub">單獨漏斗：申請 → 入學</div>
+        </div>
+        <span class="pill">${safePct(v.enrolled, v.apply)}%</span>
+      </div>
+      <div class="unit-kpis">
+        <div class="unit-kpi"><span>申請</span><strong>${formatNum(v.apply)}</strong></div>
+        <div class="unit-kpi"><span>面試</span><strong>${formatNum(v.interview)}</strong></div>
+        <div class="unit-kpi"><span>繳費</span><strong>${formatNum(v.payment)}</strong></div>
+      </div>
+      <div class="mini-chart"><canvas id="chartFunnelUnit${idx}"></canvas></div>
+    </div>
+  `).join('');
+
+  units.forEach(([label, v], idx) => {
+    createChart(`chartFunnelUnit${idx}`, {
+      type: 'bar',
+      data: {
+        labels: ['申請','面試','錄取','通知','繳費','標入','入學'],
+        datasets: [{ label, data: [v.apply, v.interview, v.admit, v.notify, v.payment, v.standard, v.enrolled], backgroundColor: COLORS[idx] || COLORS[0] }]
+      },
+      options: chartOptions({ legend: false, beginAtZero: true, indexAxis: 'y' })
+    });
+  });
+
+  document.getElementById('unitFunnelTableBody').innerHTML = units.map(([label, v]) => `
+    <tr>
+      <td><span class="pill">${escapeHtml(label)}</span></td>
+      <td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.notify}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td>
+      <td>${safePct(v.interview, v.apply)}%</td><td>${safePct(v.payment, v.admit)}%</td><td>${safePct(v.enrolled, v.apply)}%</td>
+    </tr>
+  `).join('') || emptyRow(11);
+}
+
+function renderCollege(subjectMap) {
+  const rows = Object.entries(subjectMap).sort((a,b) => b[1].apply - a[1].apply);
+  const top = rows.slice(0, 15);
+  createChart('chart2', {
+    type: 'bar',
+    data: {
+      labels: top.map(([,v]) => shortLabel(v.subject, 34)),
+      datasets: [{ label: '申請數', data: top.map(([,v]) => v.apply), backgroundColor: COLORS[0] }]
+    },
+    options: chartOptions({ legend: false, beginAtZero: true, indexAxis: 'y' })
+  });
+  document.getElementById('collegeTableBody').innerHTML = rows.map(([, v]) => {
+    const categories = Array.from(v.categories).join('、') || '未分類';
+    const colleges = Array.from(v.colleges).join('、') || '未填寫';
+    const types = Array.from(v.types).join('、') || '未分類';
+    return `<tr><td>${escapeHtml(v.subject)}</td><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(colleges)}</td><td>${escapeHtml(types)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td><td>${safePct(v.enrolled, v.apply)}%</td></tr>`;
+  }).join('') || emptyRow(11);
+}
+
+function renderType(typeMap) {
+  const labels = Object.keys(typeMap).sort((a,b) => typeMap[b].apply - typeMap[a].apply);
+  createChart('chart3', {
+    type: 'pie',
+    data: { labels, datasets: [{ data: labels.map(k => typeMap[k].apply), backgroundColor: COLORS }] },
+    options: chartOptions({ legend: true })
+  });
+  document.getElementById('typeTableBody').innerHTML = labels.map(k => {
+    const v = typeMap[k];
+    return `<tr><td>${escapeHtml(k)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td></tr>`;
+  }).join('') || emptyRow(7);
+}
+
+function renderLanguage(langMap, all) {
+  const labels = Object.keys(langMap).sort((a,b) => langMap[b].apply - langMap[a].apply);
+  document.getElementById('langMetrics').innerHTML = labels.map(k => metricHtml(k, langMap[k].apply, k.includes('英') ? 'blue' : (k.includes('韓') ? 'green' : ''), `${safePct(langMap[k].apply, calcTotals(all).apply)}% 申請占比`)).join('');
+
+  createChart('chart4', {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '申請數', data: labels.map(k => langMap[k].apply), backgroundColor: COLORS }] },
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
+
+  const cats = ['學部','大學院','SolBridge'];
+  document.getElementById('langTableBody').innerHTML = labels.map(lang => {
+    const rowVals = cats.map(cat => all.filter(r => normalizeLanguage(r.dim4) === lang && r.category === cat).reduce((s,r) => s + r.apply, 0));
+    return `<tr><td>${escapeHtml(lang)}</td>${rowVals.map(v => `<td>${v}</td>`).join('')}<td>${rowVals.reduce((a,b) => a+b, 0)}</td></tr>`;
+  }).join('') || emptyRow(5);
+}
+
+function renderMonthly(totals, subjectMap) {
+  document.getElementById('monthlyMetrics').innerHTML = [
+    metricHtml('已繳費', totals.payment, 'green', `繳費率 ${safePct(totals.payment, totals.apply)}%`),
+    metricHtml('已標入', totals.standard, 'orange', `標入/繳費 ${safePct(totals.standard, totals.payment)}%`),
+    metricHtml('已入學', totals.enrolled, 'green', `入學/申請 ${safePct(totals.enrolled, totals.apply)}%`),
+    metricHtml('錄取後流失', Math.max(totals.admit - totals.payment, 0), '', '錄取 - 繳費')
+  ].join('');
+
+  createChart('chart5', {
+    type: 'bar',
+    data: {
+      labels: ['申請','繳費','標入','入學'],
+      datasets: [{ label: '人數', data: [totals.apply, totals.payment, totals.standard, totals.enrolled], backgroundColor: [COLORS[0], COLORS[1], COLORS[2], COLORS[4]] }]
+    },
+    options: chartOptions({ legend: false, beginAtZero: true })
+  });
+
+  const rows = Object.entries(subjectMap).sort((a,b) => b[1].apply - a[1].apply);
+  document.getElementById('monthlyTableBody').innerHTML = rows.map(([, v]) => {
+    const categories = Array.from(v.categories).join('、') || '未分類';
+    const note = v.apply > 0 && v.payment === 0 ? '尚未形成繳費數據/或原表未勾選' : '';
+    return `<tr><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(v.subject)}</td><td>${v.apply}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td><td>${escapeHtml(note)}</td></tr>`;
+  }).join('') || emptyRow(7);
+}
+
+function renderDetails(all) {
+  const unitOrder = ['學部', '大學院', 'SolBridge'];
+  if (!unitOrder.includes(selectedDetailUnit)) selectedDetailUnit = '學部';
+
+  const unitSummary = unitOrder.map(label => {
+    const rows = all.filter(r => r.category === label);
+    const totals = calcTotals(rows);
+    return { label, rows, totals };
+  });
+
+  const unitCounts = unitSummary.map(unit => `${unit.label} ${unit.rows.length} 行 / 申請 ${formatNum(unit.totals.apply)} 名`).join('｜');
+  document.getElementById('rowCountLabel').textContent = `${unitCounts}｜共 ${all.length} 行`;
+
+  const switchBox = document.getElementById('detailSwitch');
+  if (switchBox) {
+    switchBox.innerHTML = unitSummary.map(unit => `
+      <button class="detail-switch-btn ${unit.label === selectedDetailUnit ? 'active' : ''}" type="button" onclick="switchDetailUnit('${unit.label}')">
+        ${escapeHtml(unit.label)}<span class="count">${formatNum(unit.totals.apply)} 名</span>
+      </button>`).join('');
+  }
+
+  const selected = unitSummary.find(unit => unit.label === selectedDetailUnit) || unitSummary[0];
+  document.getElementById('detailSections').innerHTML = renderDetailUnit(selected.label, selected.rows, selected.totals);
+}
+
+function switchDetailUnit(label) {
+  selectedDetailUnit = label;
+  if (dashData && Array.isArray(dashData.all)) {
+    renderDetails(dashData.all);
+    applyLanguage();
+  }
+}
+
+function renderDetailUnit(label, rows, totals) {
+  const visibleRows = rows.filter(row => hasValidWeek(row));
+  const hiddenBlankWeekCount = rows.length - visibleRows.length;
+  const visibleTotals = calcTotals(visibleRows);
+
+  if (!rows.length) {
+    return `
+      <section class="detail-unit">
+        <div class="detail-unit-header">
+          <div><div class="detail-unit-title">${escapeHtml(label)}</div><div class="detail-unit-sub">沒有解析到此招生板塊資料</div></div>
+          <div class="detail-unit-kpis"><span class="mini-pill">申請 0</span><span class="mini-pill">入學 0</span></div>
+        </div>
+        <div class="empty-state">目前沒有可展示資料</div>
+      </section>`;
+  }
+
+  if (!visibleRows.length) {
+    return `
+      <section class="detail-unit">
+        <div class="detail-unit-header">
+          <div>
+            <div class="detail-unit-title">${escapeHtml(label)}</div>
+            <div class="detail-unit-sub">此區已隱藏未標週次的資料列；目前沒有可展示的週次資料。</div>
+          </div>
+          <div class="detail-unit-kpis"><span class="mini-pill">已隱藏 ${formatNum(hiddenBlankWeekCount)} 行</span></div>
+        </div>
+        <div class="empty-state">沒有標註週次的空白資料不展示</div>
+      </section>`;
+  }
+
+  const weekGroups = groupRowsByWeek(visibleRows);
+  const weekHtml = weekGroups.map((group, groupIdx) => renderDetailWeek(group, groupIdx)).join('');
+  const hiddenNote = hiddenBlankWeekCount > 0 ? `已隱藏 ${formatNum(hiddenBlankWeekCount)} 行未標週次資料。` : '未標週次資料不展示。';
+  return `
+    <section class="detail-unit">
+      <div class="detail-unit-header">
+        <div>
+          <div class="detail-unit-title">${escapeHtml(label)}</div>
+          <div class="detail-unit-sub">目前只顯示此招生板塊，可用上方按鈕切換；不展示姓名欄位。${hiddenNote}</div>
+        </div>
+        <div class="detail-unit-kpis">
+          <span class="mini-pill">申請 ${formatNum(visibleTotals.apply)}</span>
+          <span class="mini-pill">面試 ${formatNum(visibleTotals.interview)}</span>
+          <span class="mini-pill">錄取 ${formatNum(visibleTotals.admit)}</span>
+          <span class="mini-pill">繳費 ${formatNum(visibleTotals.payment)}</span>
+          <span class="mini-pill">入學 ${formatNum(visibleTotals.enrolled)}</span>
+        </div>
+      </div>
+      ${weekHtml}
+    </section>`;
+}
+function groupRowsByWeek(rows) {
+  const map = new Map();
+  rows.filter(row => hasValidWeek(row)).forEach(row => {
+    const key = makeWeekKey(row);
+    if (!map.has(key)) {
+      map.set(key, { key, label: makeWeekLabel(row), rows: [] });
+    }
+    map.get(key).rows.push(row);
+  });
+  return Array.from(map.values()).sort((a, b) => compareWeekGroups(a, b));
+}
+
+function hasValidWeek(row) {
+  const week = cleanCell(row && row.week);
+  return Boolean(week && !isBlankLabel(week) && !/^未標示/.test(week));
+}
+
+function makeWeekKey(row) {
+  const year = cleanCell(row.year) || '未標示年度';
+  const term = cleanCell(row.term) || '未標示學期';
+  const week = cleanCell(row.week) || '未標示週次';
+  const date = cleanCell(row.date);
+  return [year, term, week, date].filter(Boolean).join('|');
+}
+
+function makeWeekLabel(row) {
+  const parts = [];
+  if (cleanCell(row.year)) parts.push(cleanCell(row.year));
+  if (cleanCell(row.term)) parts.push(cleanCell(row.term));
+  parts.push(cleanCell(row.week) || '未標示週次');
+  if (cleanCell(row.date)) parts.push(`基準日 ${cleanCell(row.date)}`);
+  return parts.join('｜');
+}
+
+function compareWeekGroups(a, b) {
+  return String(b.key).localeCompare(String(a.key), currentLang === 'ko' ? 'ko' : 'zh-CN', { numeric: true });
+}
+
+function renderDetailWeek(group, groupIdx) {
+  const rows = group.rows;
+  const totals = calcTotals(rows);
+  const typeMap = groupBy(rows, row => row.dim3 || '未分類');
+  const typeSummary = Object.entries(typeMap)
+    .sort((a, b) => b[1].apply - a[1].apply || a[0].localeCompare(b[0], 'ko'))
+    .map(([type, v]) => `<span class="type-chip">${escapeHtml(type)} <strong>${formatNum(v.apply)}</strong> 名</span>`)
+    .join('') || '<span class="type-chip">未分類 <strong>0</strong> 名</span>';
+
+  return `
+    <div class="detail-week">
+      <div class="detail-week-head">
+        <div>
+          <div class="detail-week-title">${escapeHtml(group.label)}</div>
+          <div class="detail-week-sub">本週類型匯總：申請 ${formatNum(totals.apply)}｜面試 ${formatNum(totals.interview)}｜錄取 ${formatNum(totals.admit)}｜繳費 ${formatNum(totals.payment)}｜入學 ${formatNum(totals.enrolled)}</div>
+        </div>
+        <div class="type-summary">${typeSummary}</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>年度</th><th>學期</th><th>週次</th><th>學院/專業</th><th>類型</th><th>語言</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>入學</th></tr></thead>
+          <tbody>
+            ${rows.map((r, idx) => detailRowHtml(r, idx + 1)).join('')}
+            <tr class="detail-total-row"><td colspan="7">本週合計</td><td>${totals.apply}</td><td>${totals.interview}</td><td>${totals.admit}</td><td>${totals.notify}</td><td>${totals.payment}</td><td>${totals.standard}</td><td>${totals.enrolled}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function detailRowHtml(r, idx) {
+  const college = displayOrBlank(r.dim1);
+  const major = displayOrBlank(r.dim2);
+  const type = displayOrBlank(r.dim3);
+  const language = displayOrBlank(r.dim4);
+  return `
+    <tr>
+      <td>${idx}</td><td>${escapeHtml(r.year)}</td><td>${escapeHtml(r.term)}</td><td>${escapeHtml(r.week)}</td>
+      <td>${escapeHtml(college)}${major ? `<br><span class="small-note">${escapeHtml(major)}</span>` : ''}</td><td>${escapeHtml(type)}</td><td>${escapeHtml(language)}</td>
+      <td>${r.apply}</td><td>${r.interview}</td><td>${r.admit}</td><td>${r.notify}</td><td>${r.payment}</td><td>${r.standard}</td><td>${r.enrolled}</td>
+    </tr>`;
+}
+
+function groupBySubject(rows) {
+  const map = {};
+  rows.forEach(row => {
+    const subject = cleanDisplaySubject(row.dim2 || row.dim1 || '未填寫');
+    const key = normalizeSubjectKey(subject);
+    if (!map[key]) {
+      map[key] = {
+        ...emptyTotals(),
+        subject,
+        categories: new Set(),
+        colleges: new Set(),
+        types: new Set(),
+        languages: new Set()
+      };
+    }
+    METRICS.forEach(metric => { map[key][metric] += row[metric] || 0; });
+    if (row.category) map[key].categories.add(row.category);
+    if (row.dim1 && !isBlankLabel(row.dim1) && row.dim1 !== row.category) map[key].colleges.add(row.dim1);
+    if (row.dim3 && !isBlankLabel(row.dim3)) map[key].types.add(row.dim3);
+    if (row.dim4 && !isBlankLabel(row.dim4)) map[key].languages.add(row.dim4);
+  });
+  return map;
+}
+
+function emptyTotals() {
+  return { inquiry:0, apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, enrolled:0 };
+}
+
+function groupBy(rows, keyFn) {
+  const map = {};
+  rows.forEach(row => {
+    const key = keyFn(row) || '未分類';
+    if (!map[key]) map[key] = { inquiry:0, apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, enrolled:0 };
+    METRICS.forEach(metric => { map[key][metric] += row[metric] || 0; });
+  });
+  return map;
+}
+
+function calcTotals(rows) {
+  return rows.reduce((acc, row) => {
+    METRICS.forEach(metric => { acc[metric] += row[metric] || 0; });
+    return acc;
+  }, { inquiry:0, apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, enrolled:0 });
+}
+
+function createChart(id, config) {
+  destroyChart(id);
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  chartsObj[id] = new Chart(canvas, localizeChartConfig(config));
+}
+
+function destroyChart(id) {
+  if (chartsObj[id]) {
+    chartsObj[id].destroy();
+    delete chartsObj[id];
+  }
+}
+
+function chartOptions({ legend = false, beginAtZero = false, pctAxis = false, indexAxis = 'x' } = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis,
+    plugins: {
+      legend: { display: legend, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed}${pctAxis ? '%' : ''}` } }
+    },
+    scales: pctAxis ? { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } : {
+      x: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } },
+      y: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } }
+    }
+  };
+}
+
+function switchTab(i) {
+  document.querySelectorAll('.tab-content').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  document.querySelectorAll('.tab').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  setTimeout(() => Object.values(chartsObj).forEach(chart => chart.resize()), 80);
+}
+
+function resetDashboard() {
+  fileInput.value = '';
+  Object.keys(chartsObj).forEach(destroyChart);
+  dashData = null;
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('sheetInfo').innerHTML = '';
+  setStatus('正在嘗試自動讀取 data.xlsx；若沒有部署資料檔，也可以手動上傳 Excel。', '');
+}
+
+function setStatus(message, type) {
+  const el = document.getElementById('fileInfo');
+  el.innerHTML = trText(message);
+  el.className = `file-info ${type || ''}`;
+}
+
+function metricHtml(label, value, cls = '', sub = '') {
+  return `<div class="metric ${cls}"><div class="metric-label">${escapeHtml(label)}</div><div class="metric-value">${formatNum(value)}</div>${sub ? `<div class="metric-sub">${escapeHtml(sub)}</div>` : ''}</div>`;
+}
+
+function safePct(numerator, denominator) {
+  numerator = Number(numerator) || 0;
+  denominator = Number(denominator) || 0;
+  if (!denominator) return '0.0';
+  return ((numerator / denominator) * 100).toFixed(1);
+}
+
+function toNumber(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const text = String(value).replace(/[,，\s]/g, '').replace(/%$/, '');
+  if (!text || ['-','—','–','☐'].includes(text)) return 0;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function cleanCell(value) {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date && !isNaN(value)) return value.toISOString().slice(0,10);
+  return String(value).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeText(value) {
+  return cleanCell(value)
+    .toLowerCase()
+    .replace(/[\s\[\]（）()【】「」:：_\-—–|/\\]/g, '')
+    .replace(/學/g, '学')
+    .replace(/週/g, '周')
+    .replace(/據/g, '据')
+    .replace(/準/g, '准')
+    .replace(/專/g, '专')
+    .replace(/業/g, '业')
+    .replace(/類/g, '类')
+    .replace(/語/g, '语')
+    .replace(/問/g, '问')
+    .replace(/請/g, '请')
+    .replace(/試/g, '试')
+    .replace(/錄/g, '录')
+    .replace(/繳/g, '缴')
+    .replace(/費/g, '费')
+    .replace(/標/g, '标')
+    .replace(/備註/g, '备注');
+}
+
+function inferLanguage(text) {
+  const n = normalizeText(text);
+  if (n.includes('영어') || n.includes('english') || n.includes('英')) return '英文';
+  if (n.includes('한국어') || n.includes('korean') || n.includes('韓') || n.includes('韩')) return '韓文';
+  return '';
+}
+
+function normalizeLanguage(value) {
+  const n = normalizeText(value);
+  if (!n || n.includes('未填写') || n.includes('未填寫')) return '未填寫';
+  if (n.includes('영어') || n.includes('english') || n.includes('英')) return '英文';
+  if (n.includes('한국어') || n.includes('korean') || n.includes('韩') || n.includes('韓')) return '韓文';
+  return cleanCell(value) || '未填寫';
+}
+
+function cleanDisplaySubject(value) {
+  const text = cleanCell(value);
+  if (!text || isBlankLabel(text)) return '未填寫';
+  return text;
+}
+
+function normalizeSubjectKey(value) {
+  const text = normalizeText(value).replace(/\s+/g, '');
+  return text || '未填写';
+}
+
+function isBlankLabel(value) {
+  const n = normalizeText(value);
+  return !n || n === '未填写' || n === '未填寫' || n === '未分类' || n === '未分類' || n === '-' || n === 'none';
+}
+
+function shortLabel(text, maxLen) {
+  text = cleanCell(text);
+  return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
+}
+
+function formatNum(value) {
+  if (typeof value === 'number') return value.toLocaleString(currentLang === 'ko' ? 'ko-KR' : 'zh-CN');
+  return String(value);
+}
+
+function emptyRow(cols) {
+  return `<tr><td colspan="${cols}" class="empty-state">目前沒有可展示資料</td></tr>`;
+}
+
+function displayOrBlank(value) {
+  const text = cleanCell(value);
+  if (!text) return '';
+  return isBlankLabel(text) ? '' : text;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+</script>
+</body>
+</html>
