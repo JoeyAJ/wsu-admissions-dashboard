@@ -303,8 +303,20 @@
       </div>
     </section>
 
-    <section class="status-strip">
-      <div class="status-card full">
+    <section class="upload-card">
+      <div class="upload">
+        <div style="font-weight:800;margin-bottom:6px;">📤 Excel 資料來源</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">部署版會優先自動讀取同資料夾的 data.xlsx；也支援手動上傳 .xlsx / .xls。</div>
+        <div class="upload-actions">
+          <label class="btn" style="cursor:pointer;">
+            📤 選擇 Excel 文件
+            <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+          </label>
+          <button class="btn secondary" type="button" onclick="resetDashboard()">🔄 重新載入</button>
+        </div>
+        <div class="drop-zone" id="dropZone">也可以把 Excel 直接拖曳到這裡</div>
+      </div>
+      <div class="status-card">
         <div class="status-title">資料讀取狀態</div>
         <div class="file-info" id="fileInfo">正在自動讀取 data.xlsx。</div>
         <div class="small-note" id="sheetInfo"></div>
@@ -358,8 +370,16 @@
 
       <section class="tab-content">
         <div class="chart-box">
-          <div class="chart-title">學科 / 專業申請數 Top 15 <span>同一學科跨 편입 / 신입 / 교환 / SA 自動加總</span></div>
+          <div class="chart-title">學部 ＋ 大學院 學科申請數 Top 15 <span>滑鼠懸停可見學部 / 大學院 / 英文授課 / 韓文授課 細分</span></div>
           <div class="chart tall"><canvas id="chart2"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">SolBridge 專業申請數 <span>各專業申請人數一覽</span></div>
+          <div class="chart" style="height:260px;"><canvas id="chart2sol"></canvas></div>
+        </div>
+        <div class="chart-box" style="padding:16px 20px;">
+          <div class="chart-title" style="margin-bottom:10px;">招生板塊 <span>點擊切換下方明細表</span></div>
+          <div class="detail-switch" id="collegeSwitch" aria-label="學院學科招生板塊切換"></div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>學科/專業</th><th>招生板塊</th><th>所屬學院</th><th>包含類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>入學</th><th>入學轉化率</th></tr></thead><tbody id="collegeTableBody"></tbody></table></div>
       </section>
@@ -396,6 +416,10 @@
         <div class="chart-box">
           <div class="chart-title">月報關鍵指標 <span>申請 / 繳費 / 標入 / 入學</span></div>
           <div class="chart"><canvas id="chart5"></canvas></div>
+        </div>
+        <div class="chart-box" style="padding:16px 20px;">
+          <div class="chart-title" style="margin-bottom:10px;">招生板塊 <span>點擊切換下方明細表</span></div>
+          <div class="detail-switch" id="monthlySwitch" aria-label="月報招生板塊切換"></div>
         </div>
         <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>學院/學科</th><th>申請</th><th>繳費</th><th>標入</th><th>入學</th><th>備註</th></tr></thead><tbody id="monthlyTableBody"></tbody></table></div>
       </section>
@@ -610,7 +634,22 @@ const KO_PHRASES = {
   '備註': '비고',
   '已解析資料明細': '파싱된 데이터 상세',
   '資料明細可用「學部 / 大學院 / SolBridge」按鈕切換查看，不需要一路往下滑。此區不展示姓名欄；若姓名未填，預設空白，不佔用 Dashboard 版面。': '데이터 상세는 「학부 / 대학원 / SolBridge」 버튼으로 전환해 볼 수 있어 아래로 계속 스크롤할 필요가 없습니다. 이 영역에는 이름 열을 표시하지 않으며, 이름이 비어 있으면 기본 공백으로 처리해 Dashboard 공간을 차지하지 않습니다.',
-  '資料明細招生板塊切換': '데이터 상세 모집 단위 전환',
+  '月報招生板塊切換': '월간 모집 단위 전환',
+  '點擊切換下方明細表': '클릭하면 아래 표가 해당 단위로 전환됩니다',
+  '全部': '전체',
+  '學院學科招生板塊切換': '단과대/학과 모집 단위 전환',
+  '學部 ＋ 大學院 學科申請數 Top 15': '학부 ＋ 대학원 학과지원자 수 Top 15',
+  '滑鼠懸停可見學部 / 大學院 / 英文授課 / 韓文授課 細分': '마우스를 올리면 학부 / 대학원 / 영어수업 / 한국어수업 세부 정보가 표시됩니다',
+  'SolBridge 專業申請數': 'SolBridge 전공지원자 수',
+  '各專業申請人數一覽': '각 전공별 지원자 수 현황',
+  '합계 지원': '합계 지원',
+  '영어수업': '영어수업',
+  '한국어수업': '한국어수업',
+  '英文授課': '영어수업',
+  '韓文授課': '한국어수업',
+  '合計申請': '합계 지원',
+  '英語授課': '영어수업',
+  '韓語授課': '한국어수업',
   '詢問': '문의',
   '申請': '지원',
   '面試': '면접',
@@ -681,9 +720,49 @@ const KO_PHRASES = {
 
 function toSimplifiedBasic(text) {
   const map = {
-    '學':'学','數':'数','據':'据','儀':'仪','錶':'表','後':'后','動':'动','讀':'读','總':'总','覽':'览','獨':'独','塊':'块','專':'专','業':'业','圖':'图','類':'类','語':'语','與':'与','點':'点','檔':'档','案':'案','支':'支','援':'援','優':'优','識':'识','稱':'称','頭':'头','選':'选','擇':'择','載':'载','這':'这','裡':'里','態':'态','還':'还','請':'请','階':'阶','進':'进','體':'体','錄':'录','繳':'缴','費':'费','標':'标','詢':'询','問':'问','試':'试','為':'为','時':'时','顯':'显','應':'应','計':'计','顯':'显','顯':'显','則':'则','轉':'转','換':'换','匯':'汇','週':'周','註':'注','隱':'隐','區':'区','鈕':'钮','欄':'栏','預':'预','設':'设','佔':'占','頁':'页','續':'续','無':'无','聯':'联','絡':'络','錯':'错','誤':'误','敗':'败','發':'发','現':'现','寫':'写','簡':'简','體':'体','韓':'韩','國':'国','際':'际','商':'商','院':'院','彙':'汇','構':'构','關':'关','鍵':'键','備':'备','註':'注','聯':'联','網':'网','寬':'宽','壓':'压','圓':'圆','這':'这','產':'产','處':'处','線':'线','內':'内','標':'标','準':'准','頁':'页','並':'并','將':'将','產':'产','學':'学','覽':'览','壓':'压','對':'对','匯':'汇','區':'区','別':'别','從':'从','續':'续','務':'务','與':'与','欄':'栏'
+    '學':'学','數':'数','據':'据','儀':'仪','錶':'表','後':'后','動':'动','讀':'读','總':'总','覽':'览',
+    '獨':'独','塊':'块','專':'专','業':'业','圖':'图','類':'类','語':'语','與':'与','點':'点','檔':'档',
+    '案':'案','支':'支','援':'援','優':'优','識':'识','稱':'称','頭':'头','選':'选','擇':'择','載':'载',
+    '這':'这','裡':'里','態':'态','還':'还','請':'请','階':'阶','進':'进','體':'体','錄':'录','繳':'缴',
+    '費':'费','標':'标','詢':'询','問':'问','試':'试','為':'为','時':'时','顯':'显','應':'应','計':'计',
+    '則':'则','轉':'转','換':'换','匯':'汇','週':'周','註':'注','隱':'隐','區':'区','鈕':'钮','欄':'栏',
+    '預':'预','設':'设','佔':'占','頁':'页','續':'续','無':'无','聯':'联','絡':'络','錯':'错','誤':'误',
+    '敗':'败','發':'发','現':'现','寫':'写','簡':'简','韓':'韩','國':'国','際':'际','商':'商','院':'院',
+    '彙':'汇','構':'构','關':'关','鍵':'键','備':'备','網':'网','寬':'宽','壓':'压','圓':'圆','產':'产',
+    '處':'处','線':'线','內':'内','準':'准','並':'并','將':'将','別':'别','從':'从','務':'务','填':'填',
+    '寫':'写','細':'细','分':'分','懸':'悬','停':'停','見':'见','課':'课','覽':'览','報':'报','紀':'纪',
+    '錄':'录','廣':'广','視':'视','圖':'图','際':'际','積':'积','術':'术','術':'术','歷':'历','歷':'历',
+    '層':'层','層':'层','廠':'厂','廠':'厂','興':'兴','興':'兴','開':'开','開':'开','閉':'闭','閉':'闭',
+    '關':'关','觀':'观','觀':'观','權':'权','權':'权','機':'机','機':'机','樓':'楼','樓':'楼','樣':'样',
+    '樣':'样','歡':'欢','歡':'欢','達':'达','達':'达','號':'号','號':'号','線':'线','統':'统','統':'统',
+    '過':'过','過':'过','運':'运','運':'运','遠':'远','遠':'远','適':'适','適':'适','難':'难','難':'难',
+    '電':'电','電':'电','當':'当','當':'当','條':'条','條':'条','樣':'样','業':'业','畫':'画','畫':'画',
+    '發':'发','廢':'废','廢':'废','題':'题','題':'题','歲':'岁','歲':'岁','鐘':'钟','鐘':'钟','間':'间',
+    '間':'间','隊':'队','隊':'队','醫':'医','醫':'医','際':'际','際':'际','實':'实','實':'实','驗':'验',
+    '驗':'验','種':'种','種':'种','縣':'县','縣':'县','紙':'纸','紙':'纸','馬':'马','馬':'马','鳥':'鸟',
+    '鳥':'鸟','魚':'鱼','魚':'鱼','龍':'龙','龍':'龙','萬':'万','萬':'万','億':'亿','億':'亿','風':'风',
+    '風':'风','飛':'飞','飛':'飞','飲':'饮','飲':'饮','館':'馆','館':'馆','駐':'驻','駐':'驻','驗':'验',
+    '麗':'丽','麗':'丽','黨':'党','黨':'党','齊':'齐','齊':'齐','齡':'龄','齡':'龄','聽':'听','聽':'听',
+    '護':'护','護':'护','讓':'让','讓':'让','變':'变','變':'变','贊':'赞','贊':'赞','資':'资','資':'资',
+    '負':'负','負':'负','財':'财','財':'财','貿':'贸','貿':'贸','費':'费','費':'费','賽':'赛','賽':'赛',
+    '購':'购','購':'购','輸':'输','輸':'输','農':'农','農':'农','辦':'办','辦':'办','遲':'迟','遲':'迟',
+    '錢':'钱','錢':'钱','鍵':'键','鍵':'键','鄉':'乡','鄉':'乡','麵':'面','麵':'面','讀':'读','讓':'让',
+    '攜':'携','攜':'携','擴':'扩','擴':'扩','據':'据','據':'据','效':'效','敵':'敌','敵':'敌','數':'数',
+    '斷':'断','斷':'断','曆':'历','曆':'历','術':'术','術':'术','橋':'桥','橋':'桥','歷':'历','歷':'历',
+    '氣':'气','氣':'气','漢':'汉','漢':'汉','灣':'湾','灣':'湾','無':'无','無':'无','獲':'获','獲':'获',
+    '環':'环','環':'环','現':'现','現':'现','產':'产','產':'产','眾':'众','眾':'众','確':'确','確':'确',
+    '競':'竞','競':'竞','純':'纯','純':'纯','結':'结','結':'结','給':'给','給':'给','緊':'紧','緊':'紧',
+    '繞':'绕','繞':'绕','繫':'系','繫':'系','繳':'缴','繳':'缴','總':'总','總':'总','縮':'缩','縮':'缩',
+    '義':'义','義':'义','親':'亲','親':'亲','證':'证','證':'证','認':'认','認':'认','議':'议','議':'议',
+    '論':'论','論':'论','設':'设','設':'设','語':'语','語':'语','誰':'谁','誰':'谁','調':'调','調':'调',
+    '豐':'丰','豐':'丰','貝':'贝','貝':'贝','質':'质','質':'质','輛':'辆','輛':'辆','輩':'辈','輩':'辈',
+    '輪':'轮','輪':'轮','辭':'辞','辭':'辞','還':'还','還':'还','這':'这','這':'这','進':'进','進':'进',
+    '連':'连','連':'连','選':'选','選':'选','錯':'错','錯':'错','開':'开','開':'开','關':'关','關':'关',
+    '隻':'只','隻':'只','難':'难','難':'难','隱':'隐','隱':'隐','隸':'隶','隸':'隶','電':'电','電':'电',
+    '頁':'页','頁':'页','頂':'顶','頂':'顶','頭':'头','頭':'头','預':'预','預':'预','顯':'显','顯':'显',
+    '題':'题','題':'题','骨':'骨','髮':'发','髮':'发',
   };
-  return String(text).replace(/[\u3400-\u9fff]/g, ch => map[ch] || ch);
+  return String(text).replace(/[\u3400-\u9fff\uf900-\ufaff]/g, ch => map[ch] || ch);
 }
 
 function trText(value) {
@@ -694,6 +773,31 @@ function trText(value) {
   // Korean UI mode: remove Chinese list punctuation and common Chinese-style separators from generated interface text.
   text = text.replace(/、/g, ', ').replace(/｜/g, ' | ');
   return text;
+}
+
+// Translate raw Excel data values (dim3 types, subject names etc.) for display
+// In zh-CN: convert trad→simp; in ko: map known CJK labels to Korean
+const RAW_LABEL_KO = {
+  '碩士':'석사', '硕士':'석사',
+  '博士':'박사',
+  '新入':'신입', '신입':'신입',
+  '編入':'편입', '편입':'편입', '转入':'편입',
+  '交換':'교환', '교환':'교환', '交换':'교환',
+  '學位':'학위', '学位':'학위',
+  '未分類':'미분류', '未分类':'미분류',
+  '未填寫':'미입력', '未填写':'미입력',
+  '英文':'영어', '英语':'영어',
+  '韓文':'한국어', '韩文':'한국어',
+  'SA':'SA',
+};
+
+function localizeRawLabel(text) {
+  if (!text) return text;
+  if (currentLang === 'zh-CN') return toSimplifiedBasic(String(text));
+  // Korean: try exact map first, then trText fallback
+  const mapped = RAW_LABEL_KO[String(text).trim()];
+  if (mapped) return mapped;
+  return trText(String(text));
 }
 
 function applyLanguage() {
@@ -744,6 +848,8 @@ function localizeChartConfig(value) {
 let chartsObj = {};
 let dashData = null;
 let selectedDetailUnit = '學部';
+let selectedMonthlyUnit = 'all';
+let selectedCollegeUnit = 'all';
 
 const SHEET_RULES = [
   { key: 'ug', label: '學部', keywords: ['學部', '学部', '本科', '학부'] },
@@ -780,6 +886,20 @@ const COLORS = ['#378ADD', '#639922', '#BA7517', '#E24B4A', '#185FA5', '#7C3AED'
 
 applyLanguage();
 loadHostedExcel();
+
+// Drag-and-drop for drop zone
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('dropZone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+});
 
 
 async function loadHostedExcel() {
@@ -1019,7 +1139,7 @@ function renderOverview(totals, categoryMap) {
   createChart('chartCategory', {
     type: 'doughnut',
     data: { labels, datasets: [{ data: labels.map(k => categoryMap[k].apply), backgroundColor: COLORS }] },
-    options: chartOptions({ legend: true })
+    options: chartOptions({ legend: true, isPie: true })
   });
 }
 
@@ -1100,51 +1220,214 @@ function renderUnitFunnels(categoryMap) {
 }
 
 function renderCollege(subjectMap) {
-  const rows = Object.entries(subjectMap).sort((a,b) => b[1].apply - a[1].apply);
-  const top = rows.slice(0, 15);
-  createChart('chart2', {
-    type: 'bar',
-    data: {
-      labels: top.map(([,v]) => shortLabel(v.subject, 34)),
-      datasets: [{ label: '申請數', data: top.map(([,v]) => v.apply), backgroundColor: COLORS[0] }]
-    },
-    options: chartOptions({ legend: false, beginAtZero: true, indexAxis: 'y' })
+  const all = dashData.all;
+
+  // ── Helper: per-subject breakdown by category & language ──
+  function buildBreakdown(rows) {
+    return rows.reduce((acc, r) => {
+      const cat = r.category;
+      const lang = normalizeLanguage(r.dim4);
+      acc.ug  += cat === '學部'      ? (r.apply || 0) : 0;
+      acc.gr  += cat === '大學院'    ? (r.apply || 0) : 0;
+      acc.sol += cat === 'SolBridge' ? (r.apply || 0) : 0;
+      acc.en  += lang === '英文'     ? (r.apply || 0) : 0;
+      acc.ko  += lang === '韓文'     ? (r.apply || 0) : 0;
+      return acc;
+    }, { ug: 0, gr: 0, sol: 0, en: 0, ko: 0 });
+  }
+
+  // ── Chart 1: 學部 + 大學院 Top 15 (stacked: UG blue / GR green) ──
+  const uggrRows = all.filter(r => r.category === '學部' || r.category === '大學院');
+  const uggrSubjectMap = groupBySubject(uggrRows);
+  uggrRows.forEach(r => {
+    const key = normalizeSubjectKey(cleanDisplaySubject(r.dim2 || r.dim1 || '未填寫'));
+    if (uggrSubjectMap[key]) {
+      if (!uggrSubjectMap[key]._rows) uggrSubjectMap[key]._rows = [];
+      uggrSubjectMap[key]._rows.push(r);
+    }
   });
+
+  const top15 = Object.entries(uggrSubjectMap)
+    .sort((a,b) => b[1].apply - a[1].apply)
+    .slice(0, 15);
+
+  const top15Labels = top15.map(([,v]) => shortLabel(v.subject, 34));
+  const top15UG     = top15.map(([,v]) => buildBreakdown(v._rows||[]).ug);
+  const top15GR     = top15.map(([,v]) => buildBreakdown(v._rows||[]).gr);
+  const top15EN     = top15.map(([,v]) => buildBreakdown(v._rows||[]).en);
+  const top15KO     = top15.map(([,v]) => buildBreakdown(v._rows||[]).ko);
+  const top15Full   = top15.map(([,v]) => v.subject);
+
+  const lUG    = trText('學部');
+  const lGR    = trText('大學院');
+  const lTotal = trText('合計申請');
+  const lEn    = trText('英文授課');
+  const lKo    = trText('韓文授課');
+  const lN     = trText('名');
+
+  destroyChart('chart2');
+  const canvas2 = document.getElementById('chart2');
+  if (canvas2) {
+    chartsObj['chart2'] = new Chart(canvas2, {
+      type: 'bar',
+      data: {
+        labels: top15Labels,
+        datasets: [
+          { label: lUG, data: top15UG, backgroundColor: 'rgba(55,138,221,0.82)', stack: 'apply' },
+          { label: lGR, data: top15GR, backgroundColor: 'rgba(99,153,34,0.82)',  stack: 'apply' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } },
+          tooltip: {
+            callbacks: {
+              title: (items) => top15Full[items[0].dataIndex] || items[0].label,
+              afterBody: (items) => {
+                const i = items[0].dataIndex;
+                const total = (top15UG[i]||0) + (top15GR[i]||0);
+                const en = top15EN[i]||0;
+                const ko = top15KO[i]||0;
+                return [
+                  `─────────────`,
+                  `${lTotal}：${total} ${lN}`,
+                  `${lEn}：${en} ${lN}`,
+                  `${lKo}：${ko} ${lN}`
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } },
+          y: { stacked: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } }
+        }
+      }
+    });
+  }
+
+  // ── Chart 2: SolBridge – single dataset, total apply per major ──
+  const solRows = all.filter(r => r.category === 'SolBridge');
+  const solSubjectMap = groupBySubject(solRows);
+
+  const solTop = Object.entries(solSubjectMap)
+    .sort((a,b) => b[1].apply - a[1].apply)
+    .slice(0, 15);
+
+  const solLabels = solTop.map(([,v]) => shortLabel(v.subject, 34));
+  const solApply  = solTop.map(([,v]) => v.apply);
+  const solFull   = solTop.map(([,v]) => v.subject);
+  const lApply    = trText('申請數');
+
+  destroyChart('chart2sol');
+  const canvas2sol = document.getElementById('chart2sol');
+  if (canvas2sol) {
+    chartsObj['chart2sol'] = new Chart(canvas2sol, {
+      type: 'bar',
+      data: {
+        labels: solLabels,
+        datasets: [
+          { label: lApply, data: solApply, backgroundColor: 'rgba(55,138,221,0.82)' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => solFull[items[0].dataIndex] || items[0].label,
+              label: (item) => ` ${lApply}：${item.parsed.x} ${lN}`
+            }
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } },
+          y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } }
+        }
+      }
+    });
+  }
+
+  // ── Filter switch buttons ──
+  const unitOrder  = ['all', '學部', '大學院', 'SolBridge'];
+  const unitLabels = { all: '全部', '學部': '學部', '大學院': '大學院', 'SolBridge': 'SolBridge' };
+  const switchBox  = document.getElementById('collegeSwitch');
+  if (switchBox) {
+    switchBox.innerHTML = unitOrder.map(unit => {
+      const rows       = unit === 'all' ? all : all.filter(r => r.category === unit);
+      const unitTotals = calcTotals(rows);
+      return `<button class="detail-switch-btn ${unit === selectedCollegeUnit ? 'active' : ''}" type="button" onclick="switchCollegeUnit('${unit}')">
+        ${escapeHtml(trText(unitLabels[unit]))}<span class="count">${formatNum(unitTotals.apply)} ${lN}</span>
+      </button>`;
+    }).join('');
+  }
+
+  renderCollegeTable();
+}
+
+function renderCollegeTable() {
+  const all = dashData.all;
+  const filteredAll = selectedCollegeUnit === 'all' ? all : all.filter(r => r.category === selectedCollegeUnit);
+  const filteredSubjectMap = groupBySubject(filteredAll);
+  const rows = Object.entries(filteredSubjectMap).sort((a,b) => b[1].apply - a[1].apply);
   document.getElementById('collegeTableBody').innerHTML = rows.map(([, v]) => {
-    const categories = Array.from(v.categories).join('、') || '未分類';
-    const colleges = Array.from(v.colleges).join('、') || '未填寫';
-    const types = Array.from(v.types).join('、') || '未分類';
+    const categories = Array.from(v.categories).map(c => localizeRawLabel(c)).join('、') || trText('未分類');
+    const colleges   = Array.from(v.colleges).map(c => localizeRawLabel(c)).join('、') || trText('未填寫');
+    const types      = Array.from(v.types).map(t => localizeRawLabel(t)).join('、') || trText('未分類');
     return `<tr><td>${escapeHtml(v.subject)}</td><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(colleges)}</td><td>${escapeHtml(types)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td><td>${safePct(v.enrolled, v.apply)}%</td></tr>`;
   }).join('') || emptyRow(11);
 }
 
+function switchCollegeUnit(unit) {
+  selectedCollegeUnit = unit;
+  if (dashData && Array.isArray(dashData.all)) {
+    const switchBox = document.getElementById('collegeSwitch');
+    if (switchBox) {
+      const units = ['all', '學部', '大學院', 'SolBridge'];
+      switchBox.querySelectorAll('.detail-switch-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', units[i] === selectedCollegeUnit);
+      });
+    }
+    renderCollegeTable();
+    applyLanguage();
+  }
+}
+
 function renderType(typeMap) {
   const labels = Object.keys(typeMap).sort((a,b) => typeMap[b].apply - typeMap[a].apply);
+  const displayLabels = labels.map(k => localizeRawLabel(k));
   createChart('chart3', {
     type: 'pie',
-    data: { labels, datasets: [{ data: labels.map(k => typeMap[k].apply), backgroundColor: COLORS }] },
-    options: chartOptions({ legend: true })
+    data: { labels: displayLabels, datasets: [{ data: labels.map(k => typeMap[k].apply), backgroundColor: COLORS }] },
+    options: chartOptions({ legend: true, isPie: true })
   });
   document.getElementById('typeTableBody').innerHTML = labels.map(k => {
     const v = typeMap[k];
-    return `<tr><td>${escapeHtml(k)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td></tr>`;
+    return `<tr><td>${escapeHtml(localizeRawLabel(k))}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td></tr>`;
   }).join('') || emptyRow(7);
 }
 
 function renderLanguage(langMap, all) {
   const labels = Object.keys(langMap).sort((a,b) => langMap[b].apply - langMap[a].apply);
-  document.getElementById('langMetrics').innerHTML = labels.map(k => metricHtml(k, langMap[k].apply, k.includes('英') ? 'blue' : (k.includes('韓') ? 'green' : ''), `${safePct(langMap[k].apply, calcTotals(all).apply)}% 申請占比`)).join('');
+  const displayLabels = labels.map(k => localizeRawLabel(k));
+  document.getElementById('langMetrics').innerHTML = labels.map((k, i) => metricHtml(displayLabels[i], langMap[k].apply, k.includes('英') ? 'blue' : (k.includes('韓') ? 'green' : ''), `${safePct(langMap[k].apply, calcTotals(all).apply)}% ${trText('申請占比')}`)).join('');
 
   createChart('chart4', {
     type: 'bar',
-    data: { labels, datasets: [{ label: '申請數', data: labels.map(k => langMap[k].apply), backgroundColor: COLORS }] },
+    data: { labels: displayLabels, datasets: [{ label: trText('申請數'), data: labels.map(k => langMap[k].apply), backgroundColor: COLORS }] },
     options: chartOptions({ legend: false, beginAtZero: true })
   });
 
   const cats = ['學部','大學院','SolBridge'];
-  document.getElementById('langTableBody').innerHTML = labels.map(lang => {
+  document.getElementById('langTableBody').innerHTML = labels.map((lang, i) => {
     const rowVals = cats.map(cat => all.filter(r => normalizeLanguage(r.dim4) === lang && r.category === cat).reduce((s,r) => s + r.apply, 0));
-    return `<tr><td>${escapeHtml(lang)}</td>${rowVals.map(v => `<td>${v}</td>`).join('')}<td>${rowVals.reduce((a,b) => a+b, 0)}</td></tr>`;
+    return `<tr><td>${escapeHtml(displayLabels[i])}</td>${rowVals.map(v => `<td>${v}</td>`).join('')}<td>${rowVals.reduce((a,b) => a+b, 0)}</td></tr>`;
   }).join('') || emptyRow(5);
 }
 
@@ -1165,12 +1448,52 @@ function renderMonthly(totals, subjectMap) {
     options: chartOptions({ legend: false, beginAtZero: true })
   });
 
-  const rows = Object.entries(subjectMap).sort((a,b) => b[1].apply - a[1].apply);
+  // Build unit filter switch
+  const all = dashData.all;
+  const unitOrder = ['all', '學部', '大學院', 'SolBridge'];
+  const unitLabels = { all: '全部', '學部': '學部', '大學院': '大學院', 'SolBridge': 'SolBridge' };
+  const switchBox = document.getElementById('monthlySwitch');
+  if (switchBox) {
+    switchBox.innerHTML = unitOrder.map(unit => {
+      const rows = unit === 'all' ? all : all.filter(r => r.category === unit);
+      const unitTotals = calcTotals(rows);
+      return `<button class="detail-switch-btn ${unit === selectedMonthlyUnit ? 'active' : ''}" type="button" onclick="switchMonthlyUnit('${unit}')">
+        ${escapeHtml(trText(unitLabels[unit]))}<span class="count">${formatNum(unitTotals.apply)} ${trText('명')}</span>
+      </button>`;
+    }).join('');
+  }
+
+  renderMonthlyTable(subjectMap);
+}
+
+function renderMonthlyTable(subjectMap) {
+  const all = dashData.all;
+  // Filter rows by selected unit
+  const filteredAll = selectedMonthlyUnit === 'all' ? all : all.filter(r => r.category === selectedMonthlyUnit);
+  // Re-compute subjectMap for filtered rows
+  const filteredSubjectMap = groupBySubject(filteredAll);
+  const rows = Object.entries(filteredSubjectMap).sort((a,b) => b[1].apply - a[1].apply);
   document.getElementById('monthlyTableBody').innerHTML = rows.map(([, v]) => {
-    const categories = Array.from(v.categories).join('、') || '未分類';
-    const note = v.apply > 0 && v.payment === 0 ? '尚未形成繳費數據/或原表未勾選' : '';
+    const categories = Array.from(v.categories).map(c => localizeRawLabel(c)).join('、') || trText('未分類');
+    const note = v.apply > 0 && v.payment === 0 ? trText('尚未形成繳費數據/或原表未勾選') : '';
     return `<tr><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(v.subject)}</td><td>${v.apply}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.enrolled}</td><td>${escapeHtml(note)}</td></tr>`;
   }).join('') || emptyRow(7);
+}
+
+function switchMonthlyUnit(unit) {
+  selectedMonthlyUnit = unit;
+  if (dashData && Array.isArray(dashData.all)) {
+    // Update button active states
+    const switchBox = document.getElementById('monthlySwitch');
+    if (switchBox) {
+      switchBox.querySelectorAll('.detail-switch-btn').forEach((btn, i) => {
+        const units = ['all', '學部', '大學院', 'SolBridge'];
+        btn.classList.toggle('active', units[i] === selectedMonthlyUnit);
+      });
+    }
+    renderMonthlyTable(null);
+    applyLanguage();
+  }
 }
 
 function renderDetails(all) {
@@ -1301,8 +1624,8 @@ function renderDetailWeek(group, groupIdx) {
   const typeMap = groupBy(rows, row => row.dim3 || '未分類');
   const typeSummary = Object.entries(typeMap)
     .sort((a, b) => b[1].apply - a[1].apply || a[0].localeCompare(b[0], 'ko'))
-    .map(([type, v]) => `<span class="type-chip">${escapeHtml(type)} <strong>${formatNum(v.apply)}</strong> 名</span>`)
-    .join('') || '<span class="type-chip">未分類 <strong>0</strong> 名</span>';
+    .map(([type, v]) => `<span class="type-chip">${escapeHtml(localizeRawLabel(type))} <strong>${formatNum(v.apply)}</strong> ${trText('名')}</span>`)
+    .join('') || `<span class="type-chip">${trText('未分類')} <strong>0</strong> ${trText('名')}</span>`;
 
   return `
     <div class="detail-week">
@@ -1328,8 +1651,8 @@ function renderDetailWeek(group, groupIdx) {
 function detailRowHtml(r, idx) {
   const college = displayOrBlank(r.dim1);
   const major = displayOrBlank(r.dim2);
-  const type = displayOrBlank(r.dim3);
-  const language = displayOrBlank(r.dim4);
+  const type = localizeRawLabel(displayOrBlank(r.dim3));
+  const language = localizeRawLabel(displayOrBlank(r.dim4));
   return `
     <tr>
       <td>${idx}</td><td>${escapeHtml(r.year)}</td><td>${escapeHtml(r.term)}</td><td>${escapeHtml(r.week)}</td>
@@ -1397,20 +1720,32 @@ function destroyChart(id) {
   }
 }
 
-function chartOptions({ legend = false, beginAtZero = false, pctAxis = false, indexAxis = 'x' } = {}) {
-  return {
+function chartOptions({ legend = false, beginAtZero = false, pctAxis = false, indexAxis = 'x', isPie = false } = {}) {
+  const base = {
     responsive: true,
     maintainAspectRatio: false,
     indexAxis,
     plugins: {
       legend: { display: legend, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
-      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed}${pctAxis ? '%' : ''}` } }
-    },
-    scales: pctAxis ? { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } : {
-      x: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } },
-      y: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } }
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            // For horizontal bars (indexAxis='y'), value is in parsed.x; for vertical, parsed.y
+            const val = indexAxis === 'y' ? ctx.parsed.x : (ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed);
+            const v = val !== undefined && val !== null ? val : 0;
+            return `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${v}${pctAxis ? '%' : ''}`;
+          }
+        }
+      }
     }
   };
+  if (!isPie) {
+    base.scales = pctAxis ? { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } : {
+      x: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } },
+      y: { beginAtZero, ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,.12)' } }
+    };
+  }
+  return base;
 }
 
 function switchTab(i) {
