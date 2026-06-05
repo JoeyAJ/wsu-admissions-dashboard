@@ -365,7 +365,7 @@
           <div class="chart-title">學部 / 大學院 / SolBridge 獨立招生漏斗 <span>每個板塊單獨計算，不混合</span></div>
           <div class="unit-funnel-grid" id="unitFunnelCards"></div>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>取消</th><th>入學</th><th>面試/申請</th><th>繳費/錄取</th><th>入學/申請</th></tr></thead><tbody id="unitFunnelTableBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>取消</th><th>預計入學</th><th>實際入學</th><th>面試/申請</th><th>繳費/錄取</th><th>入學/申請</th></tr></thead><tbody id="unitFunnelTableBody"></tbody></table></div>
       </section>
 
       <section class="tab-content">
@@ -381,7 +381,7 @@
           <div class="chart-title" style="margin-bottom:10px;">招生板塊 <span>點擊切換下方明細表</span></div>
           <div class="detail-switch" id="collegeSwitch" aria-label="學院學科招生板塊切換"></div>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>學科/專業</th><th>招生板塊</th><th>所屬學院</th><th>包含類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>取消</th><th>入學</th><th>入學轉化率</th></tr></thead><tbody id="collegeTableBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>學科/專業</th><th>招生板塊</th><th>所屬學院</th><th>包含類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>取消</th><th>預計入學</th><th>實際入學</th><th>入學轉化率</th></tr></thead><tbody id="collegeTableBody"></tbody></table></div>
       </section>
 
       <section class="tab-content">
@@ -392,7 +392,7 @@
           </div>
           <div class="chart-box">
             <div class="chart-title">申請類型明細 <span>申請數與入學數</span></div>
-            <div class="table-wrap"><table><thead><tr><th>類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>取消</th><th>入學</th></tr></thead><tbody id="typeTableBody"></tbody></table></div>
+            <div class="table-wrap"><table><thead><tr><th>類型</th><th>申請</th><th>面試</th><th>錄取</th><th>繳費</th><th>標入</th><th>取消</th><th>預計入學</th><th>實際入學</th></tr></thead><tbody id="typeTableBody"></tbody></table></div>
           </div>
         </div>
       </section>
@@ -414,14 +414,14 @@
       <section class="tab-content">
         <div class="metrics" id="monthlyMetrics"></div>
         <div class="chart-box">
-          <div class="chart-title">月報關鍵指標 <span>申請 / 繳費 / 標入 / 取消 / 入學</span></div>
+          <div class="chart-title">月報關鍵指標 <span>申請 / 繳費 / 標入 / 取消 / 預計入學 / 實際入學</span></div>
           <div class="chart"><canvas id="chart5"></canvas></div>
         </div>
         <div class="chart-box" style="padding:16px 20px;">
           <div class="chart-title" style="margin-bottom:10px;">招生板塊 <span>點擊切換下方明細表</span></div>
           <div class="detail-switch" id="monthlySwitch" aria-label="月報招生板塊切換"></div>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>學院/學科</th><th>申請</th><th>繳費</th><th>標入</th><th>取消</th><th>入學</th><th>備註</th></tr></thead><tbody id="monthlyTableBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>招生板塊</th><th>學院/學科</th><th>申請</th><th>繳費</th><th>標入</th><th>取消</th><th>預計入學</th><th>實際入學</th><th>備註</th></tr></thead><tbody id="monthlyTableBody"></tbody></table></div>
       </section>
 
       <section class="tab-content">
@@ -482,6 +482,8 @@ const KO_PHRASES = {
   '已标入': '표준입학 발급 완료',
   '已入學': '입학 완료',
   '已入学': '입학 완료',
+  '預計入學': '입학 예정',
+  '已繳費': '등록금 납부 완료',
   '錄取後流失': '합격',
   '录取后流失': '합격',
   '錄取 - 繳費': '합격 - 등록금 납부',
@@ -557,6 +559,10 @@ const KO_PHRASES = {
   '标入': '표준입학',
   '入學': '입학',
   '入学': '입학',
+  '預計入學': '입학 예정',
+  '预计入学': '입학 예정',
+  '實際入學': '실제 입학',
+  '实际入学': '실제 입학',
   '備註': '비고',
   '备注': '비고',
   '所屬': '소속',
@@ -620,6 +626,8 @@ const KO_PHRASES = {
   '所屬學院': '소속 단과대',
   '包含類型': '포함 유형',
   '入學轉化率': '입학 전환율',
+  '預計入學/繳費': '예정입학/등록금납부',
+  '實際入學/申請': '실제입학/지원',
   '按申請類型分布': '지원 유형별 분포',
   '新入 / 編入 / 交換 / 學位等': '신입 / 편입 / 교환 / 학위 등',
   '申請類型明細': '지원 유형 상세',
@@ -633,6 +641,7 @@ const KO_PHRASES = {
   '合計': '합계',
   '月報關鍵指標': '월간 핵심 지표',
   '申請 / 繳費 / 標入 / 取消 / 入學': '지원 / 등록금 납부 / 표준입학 / 취소 / 입학',
+  '申請 / 繳費 / 標入 / 取消 / 預計入學 / 實際入學': '지원 / 등록금 납부 / 표준입학 / 취소 / 예정입학 / 실제입학',
   '取消率': '취소율',
   '申請 / 繳費 / 標入 / 入學': '지원 / 등록금 납부 / 표준입학 / 입학',
   '學院/學科': '단과대/학과',
@@ -710,7 +719,7 @@ const KO_PHRASES = {
   '沒有解析到可用資料。已找到 Sheet': '사용 가능한 데이터를 파싱하지 못했습니다. 찾은 Sheet',
   '未找到': '찾지 못함',
   '對應 Sheet': '대응 Sheet',
-  '存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、入學」等欄位。': '존재하지만 데이터 행을 파싱하지 못했습니다. 헤더에 「지원, 면접, 합격, 등록금 납부, 표준입학, 입학」 등의 열이 있는지 확인하세요.',
+  '存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、預計入學」等欄位。': '존재하지만 데이터 행을 파싱하지 못했습니다. 헤더에 「지원, 면접, 합격, 등록금 납부, 표준입학, 예정입학」 등의 열이 있는지 확인하세요.',
   '又松大學招生 Dashboard｜自動部署版': '우송대학교 모집 Dashboard｜자동 배포 버전',
   '部署後會自動讀取同資料夾中的 data.xlsx；每次只要更新 Excel 檔案，領導刷新同一個連結即可看到最新 Dashboard。仍保留手動上傳功能，方便本機測試。': '배포 후 같은 폴더의 data.xlsx를 자동으로 읽습니다. Excel 파일만 업데이트하면 리더가 같은 링크를 새로고침하여 최신 Dashboard를 볼 수 있습니다. 로컬 테스트를 위해 수동 업로드 기능도 유지합니다.',
   'data.xlsx → Dashboard 自動展示': 'data.xlsx → Dashboard 자동 표시',
@@ -862,9 +871,9 @@ const SHEET_RULES = [
   { key: 'sol', label: 'SolBridge', keywords: ['solbridge', 'sol bridge', '國際商學院', '国际商学院'] }
 ];
 
-const METRICS = ['apply','interview','admit','notify','payment','standard','cancel','enrolled'];
+const METRICS = ['apply','interview','admit','notify','payment','standard','cancel','enrolled','actualEnrolled'];
 const METRIC_LABELS = {
-  apply: '申請', interview: '面試', admit: '錄取', notify: '通知', payment: '繳費', standard: '標入', cancel: '取消', enrolled: '入學'
+  apply: '申請', interview: '面試', admit: '錄取', notify: '通知', payment: '繳費', standard: '標入', cancel: '取消', enrolled: '預計入學', actualEnrolled: '實際入學'
 };
 const HEADER_ALIASES = {
   year: ['統計年度','统计年度','年度','year'],
@@ -883,7 +892,8 @@ const HEADER_ALIASES = {
   payment: ['繳費','缴费','학비납부','payment'],
   standard: ['標入','标入','標準入學','标准入学','標準入學通知','标准入学通知','standard'],
   cancel: ['取消','취소','cancel'],
-  enrolled: ['入學','入学','학번','enrolled'],
+  enrolled: ['預計入學','预计入学','입학예정','enrolled'],
+  actualEnrolled: ['實際入學','实际入学','실제입학','actualEnrolled'],
   remark: ['備註','备注','remark','note']
 };
 
@@ -995,7 +1005,7 @@ function parseWorkbook(wb) {
     result[rule.key] = rows;
     result.all.push(...rows);
     result.sheetMessages.push(`✅ ${rule.label}：${sheetName}｜${rows.length} 行`);
-    if (!rows.length) result.warnings.push(`「${sheetName}」存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、入學」等欄位。`);
+    if (!rows.length) result.warnings.push(`「${sheetName}」存在，但沒有解析到資料列，請確認表頭是否包含「申請、面試、錄取、繳費、標入、預計入學」等欄位。`);
   });
   return result;
 }
@@ -1021,7 +1031,7 @@ function parseSheet(ws, categoryLabel) {
   for (let i = headerRowIndex + 1; i < data.length; i++) {
     const row = data[i] || [];
     const obj = makeRowObject(row, headerIndex, categoryLabel);
-    const hasData = obj.apply || obj.interview || obj.admit || obj.payment || obj.standard || obj.enrolled || obj.dim1 || obj.dim2;
+    const hasData = obj.apply || obj.interview || obj.admit || obj.payment || obj.standard || obj.enrolled || obj.actualEnrolled || obj.dim1 || obj.dim2;
     if (!hasData) {
       blankCount += 1;
       if (blankCount >= 5) break;
@@ -1087,6 +1097,7 @@ function makeRowObject(row, idx, categoryLabel) {
     standard: num('standard'),
     cancel: num('cancel'),
     enrolled: num('enrolled'),
+    actualEnrolled: num('actualEnrolled'),
     remark: get('remark')
   };
 }
@@ -1127,18 +1138,17 @@ function renderOverview(totals, categoryMap) {
     metricHtml('申請', totals.apply, 'blue'),
     metricHtml('面試', totals.interview),
     metricHtml('錄取', totals.admit),
-    metricHtml('通知', totals.notify),
     metricHtml('繳費', totals.payment, 'green'),
     metricHtml('標入', totals.standard, 'orange'),
     metricHtml('取消', totals.cancel, 'red'),
-    metricHtml('入學', totals.enrolled, 'green'),
-    metricHtml('入學轉化率', `${safePct(totals.enrolled, totals.apply)}%`, 'blue', '入學 / 申請')
+    metricHtml('預計入學', totals.enrolled, 'green'),
+    metricHtml('入學轉化率', `${safePct(totals.actualEnrolled, totals.apply)}%`, 'blue', '實際入學 / 申請')
   ].join('');
 
   createChart('chart0', {
     type: 'bar',
     data: {
-      labels: ['申請','面試','錄取','通知','繳費','標入','取消','入學'],
+      labels: ['申請','面試','錄取','通知','繳費','標入','取消','預計入學','實際入學'],
       datasets: [{ label: '人數', data: METRICS.map(k => totals[k]), backgroundColor: COLORS }]
     },
     options: chartOptions({ legend: false, beginAtZero: true })
@@ -1159,15 +1169,15 @@ function renderFunnel(totals, categoryMap) {
     ['通知/錄取', totals.notify, totals.admit],
     ['繳費/錄取', totals.payment, totals.admit],
     ['標入/繳費', totals.standard, totals.payment],
-    ['入學/繳費', totals.enrolled, totals.payment]
+    ['實際入學/申請', totals.actualEnrolled, totals.apply]
   ];
   document.getElementById('funnelMetrics').innerHTML = ratios.map(([label, n, d]) => metricHtml(label, `${safePct(n,d)}%`, '', `${formatNum(n)} / ${formatNum(d)}`)).join('');
 
   createChart('chartFunnelCount', {
     type: 'bar',
     data: {
-      labels: ['申請','面試','錄取','通知','繳費','標入','取消','入學'],
-      datasets: [{ label: '人數', data: ['apply','interview','admit','notify','payment','standard','cancel','enrolled'].map(k => totals[k]), backgroundColor: COLORS[0] }]
+      labels: ['申請','面試','錄取','通知','繳費','標入','取消','預計入學','實際入學'],
+      datasets: [{ label: '人數', data: ['apply','interview','admit','notify','payment','standard','cancel','enrolled','actualEnrolled'].map(k => totals[k]), backgroundColor: COLORS[0] }]
     },
     options: chartOptions({ legend: false, beginAtZero: true })
   });
@@ -1195,9 +1205,9 @@ function renderUnitFunnels(categoryMap) {
       <div class="unit-card-head">
         <div>
           <div class="unit-card-title">${escapeHtml(label)}</div>
-          <div class="unit-card-sub">單獨漏斗：申請 → 入學</div>
+          <div class="unit-card-sub">單獨漏斗：申請 → 實際入學</div>
         </div>
-        <span class="pill">${safePct(v.enrolled, v.apply)}%</span>
+        <span class="pill">${safePct(v.actualEnrolled, v.apply)}%</span>
       </div>
       <div class="unit-kpis" style="grid-template-columns: repeat(4,1fr);">
         <div class="unit-kpi"><span>申請</span><strong>${formatNum(v.apply)}</strong></div>
@@ -1213,8 +1223,8 @@ function renderUnitFunnels(categoryMap) {
     createChart(`chartFunnelUnit${idx}`, {
       type: 'bar',
       data: {
-        labels: ['申請','面試','錄取','通知','繳費','標入','取消','入學'],
-        datasets: [{ label, data: [v.apply, v.interview, v.admit, v.notify, v.payment, v.standard, v.cancel, v.enrolled], backgroundColor: COLORS[idx] || COLORS[0] }]
+        labels: ['申請','面試','錄取','通知','繳費','標入','取消','預計入學','實際入學'],
+        datasets: [{ label, data: [v.apply, v.interview, v.admit, v.notify, v.payment, v.standard, v.cancel, v.enrolled, v.actualEnrolled], backgroundColor: COLORS[idx] || COLORS[0] }]
       },
       options: chartOptions({ legend: false, beginAtZero: true, indexAxis: 'y' })
     });
@@ -1223,10 +1233,10 @@ function renderUnitFunnels(categoryMap) {
   document.getElementById('unitFunnelTableBody').innerHTML = units.map(([label, v]) => `
     <tr>
       <td><span class="pill">${escapeHtml(label)}</span></td>
-      <td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.notify}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td>
-      <td>${safePct(v.interview, v.apply)}%</td><td>${safePct(v.payment, v.admit)}%</td><td>${safePct(v.enrolled, v.apply)}%</td>
+      <td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.notify}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${v.actualEnrolled}</td>
+      <td>${safePct(v.interview, v.apply)}%</td><td>${safePct(v.payment, v.admit)}%</td><td>${safePct(v.actualEnrolled, v.apply)}%</td>
     </tr>
-  `).join('') || emptyRow(11);
+  `).join('') || emptyRow(12);
 }
 
 function renderCollege(subjectMap) {
@@ -1390,8 +1400,8 @@ function renderCollegeTable() {
     const categories = Array.from(v.categories).map(c => localizeRawLabel(c)).join('、') || trText('未分類');
     const colleges   = Array.from(v.colleges).map(c => localizeRawLabel(c)).join('、') || trText('未填寫');
     const types      = Array.from(v.types).map(t => localizeRawLabel(t)).join('、') || trText('未分類');
-    return `<tr><td>${escapeHtml(v.subject)}</td><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(colleges)}</td><td>${escapeHtml(types)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${safePct(v.enrolled, v.apply)}%</td></tr>`;
-  }).join('') || emptyRow(11);
+    return `<tr><td>${escapeHtml(v.subject)}</td><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(colleges)}</td><td>${escapeHtml(types)}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${v.actualEnrolled}</td><td>${safePct(v.actualEnrolled, v.apply)}%</td></tr>`;
+  }).join('') || emptyRow(12);
 }
 
 function switchCollegeUnit(unit) {
@@ -1419,8 +1429,8 @@ function renderType(typeMap) {
   });
   document.getElementById('typeTableBody').innerHTML = labels.map(k => {
     const v = typeMap[k];
-    return `<tr><td>${escapeHtml(localizeRawLabel(k))}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td></tr>`;
-  }).join('') || emptyRow(7);
+    return `<tr><td>${escapeHtml(localizeRawLabel(k))}</td><td>${v.apply}</td><td>${v.interview}</td><td>${v.admit}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${v.actualEnrolled}</td></tr>`;
+  }).join('') || emptyRow(8);
 }
 
 function renderLanguage(langMap, all) {
@@ -1445,7 +1455,8 @@ function renderMonthly(totals, subjectMap) {
   document.getElementById('monthlyMetrics').innerHTML = [
     metricHtml('已繳費', totals.payment, 'green', `繳費率 ${safePct(totals.payment, totals.apply)}%`),
     metricHtml('已標入', totals.standard, 'orange', `標入/繳費 ${safePct(totals.standard, totals.payment)}%`),
-    metricHtml('已入學', totals.enrolled, 'green', `入學/申請 ${safePct(totals.enrolled, totals.apply)}%`),
+    metricHtml('預計入學', totals.enrolled, 'green', `預計/申請 ${safePct(totals.enrolled, totals.apply)}%`),
+    metricHtml('實際入學', totals.actualEnrolled, 'green', `實際/申請 ${safePct(totals.actualEnrolled, totals.apply)}%`),
     metricHtml('錄取', Math.max(totals.admit - totals.payment, 0), '', '錄取 - 繳費'),
     metricHtml('取消', totals.cancel, 'red', `取消率 ${safePct(totals.cancel, totals.apply)}%`)
   ].join('');
@@ -1453,8 +1464,8 @@ function renderMonthly(totals, subjectMap) {
   createChart('chart5', {
     type: 'bar',
     data: {
-      labels: ['申請','繳費','標入','取消','入學'],
-      datasets: [{ label: '人數', data: [totals.apply, totals.payment, totals.standard, totals.cancel, totals.enrolled], backgroundColor: [COLORS[0], COLORS[1], COLORS[2], '#E24B4A', COLORS[4]] }]
+      labels: ['申請','繳費','標入','取消','預計入學','實際入學'],
+      datasets: [{ label: '人數', data: [totals.apply, totals.payment, totals.standard, totals.cancel, totals.enrolled, totals.actualEnrolled], backgroundColor: [COLORS[0], COLORS[1], COLORS[2], '#E24B4A', COLORS[4], COLORS[5]] }]
     },
     options: chartOptions({ legend: false, beginAtZero: true })
   });
@@ -1487,8 +1498,8 @@ function renderMonthlyTable(subjectMap) {
   document.getElementById('monthlyTableBody').innerHTML = rows.map(([, v]) => {
     const categories = Array.from(v.categories).map(c => localizeRawLabel(c)).join('、') || trText('未分類');
     const note = v.apply > 0 && v.payment === 0 ? trText('尚未形成繳費數據/或原表未勾選') : '';
-    return `<tr><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(v.subject)}</td><td>${v.apply}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${escapeHtml(note)}</td></tr>`;
-  }).join('') || emptyRow(7);
+    return `<tr><td><span class="pill">${escapeHtml(categories)}</span></td><td>${escapeHtml(v.subject)}</td><td>${v.apply}</td><td>${v.payment}</td><td>${v.standard}</td><td>${v.cancel}</td><td>${v.enrolled}</td><td>${v.actualEnrolled}</td><td>${escapeHtml(note)}</td></tr>`;
+  }).join('') || emptyRow(8);
 }
 
 function switchMonthlyUnit(unit) {
@@ -1550,7 +1561,7 @@ function renderDetailUnit(label, rows, totals) {
       <section class="detail-unit">
         <div class="detail-unit-header">
           <div><div class="detail-unit-title">${escapeHtml(label)}</div><div class="detail-unit-sub">沒有解析到此招生板塊資料</div></div>
-          <div class="detail-unit-kpis"><span class="mini-pill">申請 0</span><span class="mini-pill">入學 0</span></div>
+          <div class="detail-unit-kpis"><span class="mini-pill">申請 0</span><span class="mini-pill">預計入學 0</span><span class="mini-pill">實際入學 0</span></div>
         </div>
         <div class="empty-state">目前沒有可展示資料</div>
       </section>`;
@@ -1586,7 +1597,8 @@ function renderDetailUnit(label, rows, totals) {
           <span class="mini-pill">錄取 ${formatNum(visibleTotals.admit)}</span>
           <span class="mini-pill">繳費 ${formatNum(visibleTotals.payment)}</span>
           <span class="mini-pill" style="color:#E24B4A;border-color:#fca5a5;">取消 ${formatNum(visibleTotals.cancel)}</span>
-          <span class="mini-pill">入學 ${formatNum(visibleTotals.enrolled)}</span>
+          <span class="mini-pill">預計入學 ${formatNum(visibleTotals.enrolled)}</span>
+          <span class="mini-pill">實際入學 ${formatNum(visibleTotals.actualEnrolled)}</span>
         </div>
       </div>
       ${weekHtml}
@@ -1651,16 +1663,16 @@ function renderDetailWeek(group, groupIdx) {
       <div class="detail-week-head">
         <div>
           <div class="detail-week-title">${escapeHtml(group.label)}</div>
-          <div class="detail-week-sub">本週類型匯總：申請 ${formatNum(totals.apply)}｜面試 ${formatNum(totals.interview)}｜錄取 ${formatNum(totals.admit)}｜繳費 ${formatNum(totals.payment)}｜入學 ${formatNum(totals.enrolled)}</div>
+          <div class="detail-week-sub">本週類型匯總：申請 ${formatNum(totals.apply)}｜面試 ${formatNum(totals.interview)}｜錄取 ${formatNum(totals.admit)}｜繳費 ${formatNum(totals.payment)}｜預計入學 ${formatNum(totals.enrolled)}｜實際入學 ${formatNum(totals.actualEnrolled)}</div>
         </div>
         <div class="type-summary">${typeSummary}</div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>年度</th><th>學期</th><th>週次</th><th>學院/專業</th><th>類型</th><th>語言</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>取消</th><th>入學</th></tr></thead>
+          <thead><tr><th>#</th><th>年度</th><th>學期</th><th>週次</th><th>學院/專業</th><th>類型</th><th>語言</th><th>申請</th><th>面試</th><th>錄取</th><th>通知</th><th>繳費</th><th>標入</th><th>取消</th><th>預計入學</th><th>實際入學</th></tr></thead>
           <tbody>
             ${rows.map((r, idx) => detailRowHtml(r, idx + 1)).join('')}
-            <tr class="detail-total-row"><td colspan="7">本週合計</td><td>${totals.apply}</td><td>${totals.interview}</td><td>${totals.admit}</td><td>${totals.notify}</td><td>${totals.payment}</td><td>${totals.standard}</td><td>${totals.cancel}</td><td>${totals.enrolled}</td></tr>
+            <tr class="detail-total-row"><td colspan="7">本週合計</td><td>${totals.apply}</td><td>${totals.interview}</td><td>${totals.admit}</td><td>${totals.notify}</td><td>${totals.payment}</td><td>${totals.standard}</td><td>${totals.cancel}</td><td>${totals.enrolled}</td><td>${totals.actualEnrolled}</td></tr>
           </tbody>
         </table>
       </div>
@@ -1676,7 +1688,7 @@ function detailRowHtml(r, idx) {
     <tr>
       <td>${idx}</td><td>${escapeHtml(r.year)}</td><td>${escapeHtml(r.term)}</td><td>${escapeHtml(r.week)}</td>
       <td>${escapeHtml(college)}${major ? `<br><span class="small-note">${escapeHtml(major)}</span>` : ''}</td><td>${escapeHtml(type)}</td><td>${escapeHtml(language)}</td>
-      <td>${r.apply}</td><td>${r.interview}</td><td>${r.admit}</td><td>${r.notify}</td><td>${r.payment}</td><td>${r.standard}</td><td>${r.cancel}</td><td>${r.enrolled}</td>
+      <td>${r.apply}</td><td>${r.interview}</td><td>${r.admit}</td><td>${r.notify}</td><td>${r.payment}</td><td>${r.standard}</td><td>${r.cancel}</td><td>${r.enrolled}</td><td>${r.actualEnrolled}</td>
     </tr>`;
 }
 
@@ -1705,7 +1717,7 @@ function groupBySubject(rows) {
 }
 
 function emptyTotals() {
-  return { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0 };
+  return { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0, actualEnrolled:0 };
 }
 
 function groupBy(rows, keyFn) {
@@ -1713,7 +1725,7 @@ function groupBy(rows, keyFn) {
   rows.forEach(row => {
     const rawKey = keyFn(row);
     const key = (!rawKey || isBlankLabel(rawKey)) ? '未填寫' : rawKey;
-    if (!map[key]) map[key] = { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0 };
+    if (!map[key]) map[key] = { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0, actualEnrolled:0 };
     METRICS.forEach(metric => { map[key][metric] += row[metric] || 0; });
   });
   return map;
@@ -1723,7 +1735,7 @@ function calcTotals(rows) {
   return rows.reduce((acc, row) => {
     METRICS.forEach(metric => { acc[metric] += row[metric] || 0; });
     return acc;
-  }, { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0 });
+  }, { apply:0, interview:0, admit:0, notify:0, payment:0, standard:0, cancel:0, enrolled:0, actualEnrolled:0 });
 }
 
 function createChart(id, config) {
