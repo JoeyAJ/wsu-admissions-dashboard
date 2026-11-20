@@ -284,6 +284,12 @@
       .chart { height: 280px; }
       .tabs { position: static; }
     }
+
+.joey-credit{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 7px;padding:15px max(4vw,16px);border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.5;text-align:center}
+.joey-credit a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.joey-credit a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+.joey-credit [lang]{display:none}
+html:lang(zh) .joey-credit [lang="zh-CN"],html:lang(ko) .joey-credit [lang="ko"],html:lang(en) .joey-credit [lang="en"]{display:inline}
   </style>
 </head>
 <body>
@@ -434,6 +440,10 @@
       </section>
     </main>
   </div>
+<footer class="joey-credit">
+  <span lang="zh-CN">网页设计与制作：</span><span lang="ko">웹 디자인·제작:</span>
+  <a href="https://nexaeon-web.vercel.app/">© 2026 Joey Personal AI Lab</a>
+</footer>
 
 <script>
 'use strict';
